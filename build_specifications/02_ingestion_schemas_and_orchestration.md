@@ -84,7 +84,7 @@ sequenceDiagram
     Generator->>Generator: Drafts deliverable requiring inline chunk anchors
     Generator->>UI: Output with embedded citation badges: [Ref: P.3, §2]
     Analyst->>UI: Clicks or hovers on citation badge
-    UI->>UI: Splits view; loads original PDF page and highlights exact paragraph in neon yellow
+    UI->>UI: Splits view, loads original PDF page and highlights exact paragraph in neon yellow
     UI->>Analyst: Displays NLI entailment confidence score: 98.4%
 ```
 
