@@ -1,4 +1,4 @@
-# 10. Demo Video Script & 5-Slide Pitch Deck Specification
+# Specification Part 4: Demo Video Script & 5-Slide Pitch Deck
 ### SIH Problem Statement 26154 | National Technical Research Organisation (NTRO)
 
 ---
