@@ -1,0 +1,46 @@
+[
+  {
+    "chunk_id": "doc_01_chunk_01",
+    "doc_id": "doc_01",
+    "source_name": "Operation_GhostLatch_Incident_Report.pdf",
+    "source_role": "PRIMARY",
+    "page_number": 1,
+    "timestamp_start": null,
+    "timestamp_end": null,
+    "char_start": 0,
+    "char_end": 410,
+    "text": "On 03 September 2026, the Cyber Resilience Unit detected unauthorized access attempts against substation control software at two grid facilities. The intrusion exploited an unpatched firmware vulnerability. Two endpoints were confirmed infected.",
+    "extracted_entities": [
+      {"text": "Cyber Resilience Unit", "label": "ORG"},
+      {"text": "substation control software", "label": "TECH"}
+    ]
+  },
+  {
+    "chunk_id": "doc_01_chunk_02",
+    "doc_id": "doc_01",
+    "source_name": "Operation_GhostLatch_Incident_Report.pdf",
+    "source_role": "PRIMARY",
+    "page_number": 3,
+    "timestamp_start": null,
+    "timestamp_end": null,
+    "char_start": 1420,
+    "char_end": 1890,
+    "text": "The Directorate of Power Grid Resilience confirmed that all affected substations have since been remediated with emergency firmware patches. No attribution to a named threat actor has been established at this time.",
+    "extracted_entities": [
+      {"text": "Directorate of Power Grid Resilience", "label": "ORG"}
+    ]
+  },
+  {
+    "chunk_id": "doc_02_chunk_01",
+    "doc_id": "doc_02",
+    "source_name": "OpenSource_News_Summary.pdf",
+    "source_role": "SUPPORTING",
+    "page_number": 1,
+    "timestamp_start": null,
+    "timestamp_end": null,
+    "char_start": 0,
+    "char_end": 300,
+    "text": "Unverified open-source reporting claims up to 14 endpoints may have been affected in the grid intrusion, though official confirmation is pending.",
+    "extracted_entities": []
+  }
+]
