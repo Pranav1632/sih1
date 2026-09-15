@@ -78,22 +78,118 @@ Exact shape as in `fixtures/mock_source_chunks.json` — `chunk_id`, `doc_id`, `
 | `SQLITE_DB_PATH` | `./data/sentinel.db` | Ingestion Engineer |
 | `FASTAPI_PORT` | `8000` | Backend/Export Engineer |
 
-### File Structure (root)
+### File Structure (root) — EXACT, every file named
+> Agents must create files at these exact paths with these exact names. Do not invent alternate names, do not place files in the root instead of their assigned folder, do not skip an `__init__.py`. If a file you need isn't listed here, add it to this table first and notify the team before creating it.
+
 ```
 sentinel-transform/
 ├── backend/
-│   ├── models/formats/        # 7 Pydantic schemas — LLM/Prompt Engineer
-│   ├── ingestion/              # parsers, chunker, SEI — Ingestion Engineer
-│   ├── orchestration/          # state.py, graph.py, nodes — Orchestration Lead
-│   ├── verification/           # fuzzy_matcher.py, gate.py, reflection.py — Verification Engineer
-│   ├── exporters/               # pptx_exporter.py, docx_exporter.py — Backend/Export Engineer
-│   ├── api/                     # FastAPI routes — Backend/Export Engineer
-│   └── main.py
-├── frontend/
-│   └── src/components/         # IngestionZone, ParameterControls, HardGateModal, CitationDrawer — Frontend Engineer
-├── fixtures/                    # mock_source_chunks.json, mock_draft_outputs.json — shared, frozen Day 1
-└── data/                        # SQLite DB, uploaded files (gitignored)
+│   ├── __init__.py
+│   ├── main.py                              # Backend/Export Engineer — single FastAPI app entrypoint (uvicorn target)
+│   ├── config.py                            # Orchestration Lead — loads all env vars from BUILD.md's table
+│   │
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── formats/                         # LLM/Prompt Engineer — one file per schema, no combined file
+│   │       ├── __init__.py
+│   │       ├── linkedin_schema.py           # LinkedInSchema
+│   │       ├── twitter_schema.py            # TweetItem, TwitterThreadSchema
+│   │       ├── advisory_schema.py           # AdvisorySchema
+│   │       ├── exec_summary_schema.py       # ExecSummarySchema
+│   │       ├── presentation_schema.py       # Slide, PresentationSchema
+│   │       ├── video_package_schema.py      # Scene, VideoPackageSchema
+│   │       └── infographic_schema.py        # InfographicSection, InfographicSchema
+│   │
+│   ├── ingestion/                           # Ingestion Engineer
+│   │   ├── __init__.py
+│   │   ├── parsers.py                       # parse_pdf, parse_docx, parse_image, parse_audio_video
+│   │   ├── chunker.py                       # chunk_text
+│   │   ├── source_governance.py             # apply_source_governance
+│   │   ├── sei_store.py                     # SQLite Source Evidence Index CRUD
+│   │   └── normalizer.py                    # run_ingestion_and_normalization (AgentState node)
+│   │
+│   ├── generation/                          # LLM/Prompt Engineer
+│   │   ├── __init__.py
+│   │   ├── prompts.py                       # one prompt template per format
+│   │   └── generator_node.py                # run_parallel_format_generation (AgentState node)
+│   │
+│   ├── verification/                        # Verification Engineer
+│   │   ├── __init__.py
+│   │   ├── fuzzy_matcher.py                 # run_entity_verification
+│   │   ├── gate_node.py                     # run_entity_and_claim_verification (AgentState node)
+│   │   └── reflection.py                    # reflection_audit_pass, run_reflection_repair (AgentState node)
+│   │
+│   ├── orchestration/                       # Orchestration Lead
+│   │   ├── __init__.py
+│   │   ├── state.py                         # AgentState TypedDict
+│   │   ├── graph.py                         # StateGraph assembly, conditional edges, MemorySaver
+│   │   └── node_stubs.py                    # Day-1 stub functions, replaced by real ones at integration
+│   │
+│   ├── exporters/                           # Backend/Export Engineer
+│   │   ├── __init__.py
+│   │   ├── pptx_exporter.py                 # export_pptx
+│   │   └── docx_exporter.py                 # export_docx
+│   │
+│   ├── api/                                 # Backend/Export Engineer
+│   │   ├── __init__.py
+│   │   └── routes.py                        # all 5 endpoints from the API table below
+│   │
+│   └── tests/                               # each engineer writes the test file for their own module
+│       ├── __init__.py
+│       ├── test_ingestion.py                # Ingestion Engineer
+│       ├── test_generation.py               # LLM/Prompt Engineer
+│       ├── test_verification.py             # Verification Engineer
+│       ├── test_exporters.py                # Backend/Export Engineer
+│       └── test_api.py                      # Backend/Export Engineer
+│
+├── frontend/                                # Frontend Engineer
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tsconfig.json
+│   ├── tailwind.config.js
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       ├── index.css
+│       ├── api/
+│       │   └── client.ts                    # typed functions for all 5 endpoints
+│       └── components/
+│           ├── IngestionZone.tsx
+│           ├── ParameterControls.tsx
+│           ├── FormatSelector.tsx
+│           ├── HardGateModal.tsx
+│           └── SourceEvidenceViewer.tsx
+│
+├── fixtures/                                # shared, frozen Day 1 — do not rename or move
+│   ├── mock_source_chunks.json
+│   └── mock_draft_outputs.json
+│
+├── data/                                    # gitignored — SQLite DB + uploaded files created at runtime
+│   └── .gitkeep
+│
+├── docs/                                    # reference specs already provided — read-only, do not edit
+│   ├── 00_master_overview.md
+│   ├── 01_architecture_tech_stack_and_ui.md
+│   ├── 02_ingestion_schemas_and_orchestration.md
+│   ├── 03_verification_debate_and_build_plan.md
+│   └── 04_demo_script_and_pitch_deck.md
+│
+├── BUILD.md                                 # this file
+├── BUILD_01_orchestration_lead.md
+├── BUILD_02_ingestion_engineer.md
+├── BUILD_03_llm_prompt_engineer.md
+├── BUILD_04_verification_engineer.md
+├── BUILD_05_backend_export_engineer.md
+├── BUILD_06_frontend_engineer.md
+├── INTEGRATION.md
+├── requirements.txt                         # Orchestration Lead — pin exact versions, Day 1
+├── .env.example                             # Orchestration Lead — every var from the env table below, no real secrets
+├── .gitignore                               # Orchestration Lead — must include data/, node_modules/, venv/, *.db
+└── README.md                                # Orchestration Lead — setup instructions, updated as pieces land
 ```
+
+**Naming rule for all agents**: use the exact filenames above — snake_case for Python, PascalCase only for `.tsx` component files as shown. Never create `utils.py`, `helpers.py`, `misc.py`, or any file not in this tree without adding it here first and notifying the team.
 
 ## Team Overview
 | Teammate | Role | Owns | Integrates With |

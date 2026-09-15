@@ -5,9 +5,12 @@
 The LangGraph state machine: `AgentState` definition, all node wiring, conditional edges, bounded reflection routing, the Hard Gate pause/resume mechanism, and checkpoint persistence. You do NOT write any node's internal logic (ingestion parsing, LLM prompts, verification rules, exporter code) — you only wire the graph and own the state contract those nodes read/write.
 
 ## Your Files
+- `backend/orchestration/__init__.py`
 - `backend/orchestration/state.py` — `AgentState` TypedDict (exact fields, see BUILD.md)
 - `backend/orchestration/graph.py` — `StateGraph` assembly, node registration, conditional edges, `MemorySaver` checkpointer
 - `backend/orchestration/node_stubs.py` — empty stub functions for `run_ingestion_and_normalization`, `run_context_and_entity_extraction`, `run_parallel_format_generation`, `run_reflection_repair`, `run_entity_and_claim_verification`, `run_deterministic_exporters` (Day 1, so the graph runs end-to-end on Day 1 even before real logic exists — other teammates replace stub bodies with real implementations, they do not touch `graph.py`)
+- `backend/config.py` — loads every env var from BUILD.md's Environment Variables table
+- `requirements.txt`, `.env.example`, `.gitignore`, `README.md` — you own these root files; update `README.md` as other teammates' pieces land
 
 ## Your Tasks (ordered by priority)
 

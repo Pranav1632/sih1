@@ -5,11 +5,13 @@
 Multimodal ingestion (PDF, DOCX, image OCR, audio/video ASR), coordinate-aware chunking, the Source Evidence Index (SQLite), and Primary/Supporting source governance logic including conflict flagging.
 
 ## Your Files
+- `backend/ingestion/__init__.py`
 - `backend/ingestion/parsers.py` — PyMuPDF, python-docx, Tesseract, faster-whisper wrappers
 - `backend/ingestion/chunker.py` — coordinate-aware chunker
 - `backend/ingestion/source_governance.py` — authority weighting + conflict detection
 - `backend/ingestion/sei_store.py` — SQLite Source Evidence Index CRUD
 - `backend/ingestion/normalizer.py` — the actual `run_ingestion_and_normalization(state) -> state` node function
+- `backend/tests/test_ingestion.py` — your test file
 
 ## Your Tasks (ordered by priority)
 

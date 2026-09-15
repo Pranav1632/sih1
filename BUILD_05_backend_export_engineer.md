@@ -5,10 +5,15 @@
 The FastAPI application (all 5 endpoints), the human-review resume logic, and the deterministic exporters (python-pptx, python-docx).
 
 ## Your Files
-- `backend/api/routes.py` — all 5 endpoints
-- `backend/api/main.py` — FastAPI app entrypoint, CORS for local frontend only
+- `backend/main.py` — the single FastAPI app entrypoint (this is what `uvicorn` runs), CORS for local frontend only
+- `backend/api/routes.py` — all 5 endpoints, registered on the app created in `main.py`
+- `backend/api/__init__.py`
 - `backend/exporters/pptx_exporter.py` — `PresentationSchema` → real `.pptx`
 - `backend/exporters/docx_exporter.py` — `AdvisorySchema` → real `.docx`
+- `backend/exporters/__init__.py`
+- `backend/tests/test_exporters.py`, `backend/tests/test_api.py` — your test files
+
+There is no `backend/api/main.py` — do not create one. `backend/main.py` is the only entrypoint in this project.
 
 ## Your Tasks (ordered by priority)
 
@@ -21,7 +26,7 @@ The FastAPI application (all 5 endpoints), the human-review resume logic, and th
 
 ### Task 2: FastAPI skeleton (Day 1-2, in parallel with Task 1)
 - What to build: all 5 endpoints from BUILD.md's API table, initially returning mock/fixture responses so Frontend Engineer can build against them Day 1
-- File(s): `backend/api/routes.py`, `backend/api/main.py`
+- File(s): `backend/api/routes.py`, `backend/main.py`
 - Inputs: none initially — mock responses
 - Outputs: running FastAPI server at `localhost:8000` with all 5 routes live (mocked)
 - Acceptance criteria: `curl` or Postman hits each endpoint and gets a schema-correct mocked response by end of Day 2 — hand this to Frontend Engineer immediately

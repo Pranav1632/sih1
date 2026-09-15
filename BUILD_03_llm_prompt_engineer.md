@@ -5,15 +5,23 @@
 All 7 Pydantic schemas, the format-specific prompts, and the parallel format generator node. This is the single-pass generator (the Multi-Agent Debate Arena is OUT OF SCOPE per BUILD.md — do not build it).
 
 ## Your Files
-- `backend/models/formats/*.py` — the 7 schemas exactly as in `02_ingestion_schemas_and_orchestration.md` Section 2.1
+- `backend/models/formats/linkedin_schema.py` — `LinkedInSchema`
+- `backend/models/formats/twitter_schema.py` — `TweetItem`, `TwitterThreadSchema`
+- `backend/models/formats/advisory_schema.py` — `AdvisorySchema`
+- `backend/models/formats/exec_summary_schema.py` — `ExecSummarySchema`
+- `backend/models/formats/presentation_schema.py` — `Slide`, `PresentationSchema`
+- `backend/models/formats/video_package_schema.py` — `Scene`, `VideoPackageSchema`
+- `backend/models/formats/infographic_schema.py` — `InfographicSection`, `InfographicSchema`
+- `backend/models/formats/__init__.py` — re-exports all schema classes so other teammates can `from backend.models.formats import AdvisorySchema` etc.
 - `backend/generation/prompts.py` — one prompt template per format
 - `backend/generation/generator_node.py` — `run_parallel_format_generation(state) -> state`
+- `backend/tests/test_generation.py` — your test file
 
 ## Your Tasks (ordered by priority)
 
 ### Task 1: Pydantic schemas first, standalone (Day 1-2)
 - What to build: all 7 schemas (`LinkedInSchema`, `TwitterThreadSchema`, `AdvisorySchema`, `ExecSummarySchema`, `PresentationSchema`, `VideoPackageSchema`, `InfographicSchema`) exactly field-for-field from the spec — no additions, no omissions
-- File(s): `backend/models/formats/*.py`
+- File(s): the 7 files listed above under "Your Files," plus `backend/models/formats/__init__.py` re-exporting all classes
 - Inputs: none — this is foundational, hand these to Verification, Export, and Frontend teammates by end of Day 2 so they can build against real (not fixture) schemas
 - Outputs: importable Pydantic models
 - Acceptance criteria: `.model_json_schema()` on each matches the spec's field list exactly; announce completion in team channel so #4/#5/#6 switch off the fixture

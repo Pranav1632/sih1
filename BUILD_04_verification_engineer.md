@@ -5,9 +5,11 @@
 The Layer 1 deterministic entity verification gate (spaCy + RapidFuzz) and the 2-pass bounded reflection audit (structural + grounding). This is your platform's single most important demo moment — build and test it thoroughly.
 
 ## Your Files
+- `backend/verification/__init__.py`
 - `backend/verification/fuzzy_matcher.py` — `run_entity_verification(text, source_entities) -> dict`
 - `backend/verification/gate_node.py` — `run_entity_and_claim_verification(state) -> state`
 - `backend/verification/reflection.py` — `run_reflection_repair(state) -> state`, `reflection_audit_pass(state) -> dict`
+- `backend/tests/test_verification.py` — your test file
 
 ## Your Tasks (ordered by priority)
 
