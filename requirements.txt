@@ -1,0 +1,24 @@
+# Core LangGraph & Orchestration State Machine
+langgraph>=0.2.0
+langchain-core>=0.3.0
+langchain-ollama>=0.2.0
+pydantic>=2.7.0
+
+# API & Server
+fastapi>=0.111.0
+uvicorn>=0.30.0
+python-dotenv>=1.0.1
+
+# Document Ingestion & Parsers
+pymupdf>=1.24.0
+python-docx>=1.1.2
+
+# Verification & Entity Matching
+spacy>=3.7.4
+rapidfuzz>=3.9.0
+
+# Exporters
+python-pptx>=0.6.23
+
+# Testing & Quality
+pytest>=8.2.0
