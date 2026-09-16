@@ -58,15 +58,50 @@ ollama pull qwen2.5:7b    # For RTX 3050 GPU deployment
 
 ### 2. Setup Python Environment
 ```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install --upgrade pip
-pip install fastapi uvicorn pydantic langgraph langchain-core langchain-ollama pymupdf python-docx faster-whisper spacy rapidfuzz networkx python-pptx reportlab
-python -m spacy download en_core_web_sm
+# Using uv (fastest):
+uv venv .venv --python 3.11
+uv pip install -r requirements.txt --python .venv\Scripts\python.exe
+
+# Or standard venv:
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 3. Run Orchestration State Machine (Day 1 Stub Graph)
+```powershell
+.\.venv\Scripts\python.exe -m backend.orchestration.graph
+```
+
+### 4. Run Verification & State Machine Tests
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_orchestration.py -v
 ```
 
 ---
 
-## 5. Security & Sovereignty Statement
+## 5. LangGraph Architecture & Shared State Contract
+
+The orchestration state machine (`backend/orchestration/graph.py`) manages the lifecycle of document transformation across 6 processing nodes:
+
+```
+[START] -> ingestion_node -> context_node -> generator_node -> reflection_node
+                                                  ^                   |
+                                                  |-- (retry <= 1) ---+
+                                                                      v
+[END] <--- export_node <--- [Hard Gate: Human Approval] <--- verification_gate_node
+```
+
+1. **`ingestion_node`**: Normalizes documents into coordinate-indexed chunks.
+2. **`context_node`**: Extracts entities and merges primary/supporting context.
+3. **`generator_node`**: Dispatches parallel generators for requested deliverable schemas.
+4. **`reflection_node`**: Audits drafts against Pydantic schemas (bounded to max 1 retry).
+5. **`verification_gate_node`**: Evaluates entity/claim fidelity; triggers Hard Gate if discrepancies arise.
+6. **`export_node`**: Compiles deliverables into production `.pptx` and `.docx` packages.
+
+---
+
+## 6. Security & Sovereignty Statement
 
 Sentinel-Transform is engineered specifically for defense and national security applications. All model weights, embeddings, vector indexes, and processing artifacts remain strictly within the host operating system boundary.
+
