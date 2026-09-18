@@ -3,18 +3,22 @@ import json
 import uuid
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+
+from backend.orchestration.state import AgentState
+from backend.orchestration.graph import app
+from backend.exporters.pptx_exporter import export_pptx
+from backend.exporters.docx_exporter import export_docx
 
 router = APIRouter(prefix="/api", tags=["Sentinel-Transform API"])
 
-# Directory for job export artifacts
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
 FIXTURES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "fixtures"))
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# In-memory store for jobs in skeleton / mock mode
-JOB_STORE: Dict[str, Dict[str, Any]] = {}
+# In-memory registry to store job file associations and metadata
+JOB_METADATA: Dict[str, Dict[str, Any]] = {}
 
 
 class GenerateRequest(BaseModel):
@@ -36,13 +40,13 @@ def _load_mock_chunks() -> List[Dict[str, Any]]:
             return json.load(f)
     return [
         {
-            "chunk_id": "chunk_01",
+            "chunk_id": "doc_01_chunk_01",
             "doc_id": "doc_01",
-            "source_name": "sample_report.pdf",
+            "source_name": "Operation_GhostLatch_Incident_Report.pdf",
             "source_role": "PRIMARY",
             "page_number": 1,
-            "text": "Sample baseline intelligence chunk.",
-            "extracted_entities": []
+            "text": "Cyber Resilience Unit detected unauthorized access attempts.",
+            "extracted_entities": [{"text": "Cyber Resilience Unit", "label": "ORG"}]
         }
     ]
 
@@ -67,19 +71,13 @@ async def ingest_files(
             f.write(content)
         saved_files.append({"filename": file.filename, "path": file_path, "role": source_role})
 
-    # Return schema-conformant source chunks
     source_chunks = _load_mock_chunks()
 
-    JOB_STORE[job_id] = {
+    JOB_METADATA[job_id] = {
         "job_id": job_id,
         "files": saved_files,
         "source_chunks": source_chunks,
-        "status": "ingested",
-        "hard_gate_triggered": False,
-        "human_approved": False,
-        "entity_discrepancies": [],
-        "draft_outputs": {},
-        "exported_files": {}
+        "source_role": source_role
     }
 
     return {
@@ -93,28 +91,46 @@ async def generate_outputs(request: GenerateRequest):
     """
     POST /api/generate
     Accepts {job_id, parameters, requested_formats}.
+    Dispatches LangGraph execution with thread_id = job_id.
     Returns {job_id, status}.
     """
     job_id = request.job_id
-    if job_id not in JOB_STORE:
-        # Auto-initialize if called directly
-        JOB_STORE[job_id] = {
-            "job_id": job_id,
-            "status": "generating",
-            "hard_gate_triggered": False,
-            "human_approved": False,
-            "entity_discrepancies": [],
-            "parameters": request.parameters,
-            "requested_formats": request.requested_formats
-        }
-    else:
-        JOB_STORE[job_id]["status"] = "generating"
-        JOB_STORE[job_id]["parameters"] = request.parameters
-        JOB_STORE[job_id]["requested_formats"] = request.requested_formats
+    meta = JOB_METADATA.get(job_id, {})
+    source_chunks = meta.get("source_chunks") or _load_mock_chunks()
+
+    initial_state: AgentState = {
+        "job_id": job_id,
+        "uploaded_files": meta.get("files", []),
+        "primary_doc_id": "doc_01",
+        "source_chunks": source_chunks,
+        "context_summary": "",
+        "extracted_entities": [],
+        "merged_context": {},
+        "parameters": request.parameters,
+        "requested_formats": request.requested_formats,
+        "draft_outputs": {},
+        "reflection_attempts": {},
+        "claim_verifications": [],
+        "entity_discrepancies": [],
+        "hard_gate_triggered": False,
+        "human_approved": False,
+        "human_corrections": {},
+        "exported_files": {}
+    }
+
+    config = {"configurable": {"thread_id": job_id}}
+
+    # Invoke the LangGraph state machine
+    app.invoke(initial_state, config=config)
+
+    # Inspect current state after run
+    state_snapshot = app.get_state(config)
+    values = state_snapshot.values if state_snapshot else {}
+    current_status = "gate_paused" if values.get("hard_gate_triggered") and not values.get("human_approved") else "completed"
 
     return {
         "job_id": job_id,
-        "status": "processing"
+        "status": current_status
     }
 
 
@@ -122,21 +138,27 @@ async def generate_outputs(request: GenerateRequest):
 async def get_job_status(job_id: str):
     """
     GET /api/status/{job_id}
+    Retrieves execution state from LangGraph checkpoint memory.
     Returns {status, hard_gate_triggered, entity_discrepancies[]}.
     """
-    job = JOB_STORE.get(job_id)
-    if not job:
-        # Return sensible default for client polling on unknown job
+    config = {"configurable": {"thread_id": job_id}}
+    state_snapshot = app.get_state(config)
+
+    if not state_snapshot or not state_snapshot.values:
         return {
             "status": "not_found",
             "hard_gate_triggered": False,
             "entity_discrepancies": []
         }
 
+    values = state_snapshot.values
+    is_gate_active = values.get("hard_gate_triggered", False) and not values.get("human_approved", False)
+    status_str = "gate_paused" if is_gate_active else "completed"
+
     return {
-        "status": job.get("status", "pending"),
-        "hard_gate_triggered": job.get("hard_gate_triggered", False),
-        "entity_discrepancies": job.get("entity_discrepancies", [])
+        "status": status_str,
+        "hard_gate_triggered": values.get("hard_gate_triggered", False),
+        "entity_discrepancies": values.get("entity_discrepancies", [])
     }
 
 
@@ -145,22 +167,38 @@ async def review_confirm(request: ReviewConfirmRequest):
     """
     POST /api/review/confirm
     Accepts {job_id, human_approved, human_corrections}.
+    Resumes LangGraph state machine execution via update_state + invoke(None).
     Returns {status}.
     """
     job_id = request.job_id
-    job = JOB_STORE.get(job_id)
-    if not job:
+    config = {"configurable": {"thread_id": job_id}}
+    state_snapshot = app.get_state(config)
+
+    if not state_snapshot or not state_snapshot.values:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id} not found."
+            detail=f"Job {job_id} not found in state store."
         )
 
-    job["human_approved"] = request.human_approved
-    job["human_corrections"] = request.human_corrections
-    job["status"] = "resumed" if request.human_approved else "rejected"
+    # Update state with human operator approval & corrections
+    app.update_state(
+        config=config,
+        values={
+            "human_approved": request.human_approved,
+            "human_corrections": request.human_corrections,
+            "hard_gate_triggered": not request.human_approved
+        }
+    )
+
+    if request.human_approved:
+        # Resume pipeline to export_node
+        app.invoke(None, config=config)
+        new_status = "resumed"
+    else:
+        new_status = "rejected"
 
     return {
-        "status": job["status"]
+        "status": new_status
     }
 
 
@@ -168,13 +206,27 @@ async def review_confirm(request: ReviewConfirmRequest):
 async def export_deliverable(format_type: str, job_id: str):
     """
     GET /api/export/{format}/{job_id}
-    Returns file download (.pptx/.docx).
+    Deterministic export endpoint.
+    Enforces Hard Gate Rule 1: returns HTTP 423 (Locked) if hard_gate_triggered == True and human_approved == False.
+    Returns file download (.pptx / .docx).
     """
-    job = JOB_STORE.get(job_id)
-    if not job:
+    config = {"configurable": {"thread_id": job_id}}
+    state_snapshot = app.get_state(config)
+
+    if not state_snapshot or not state_snapshot.values:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Job {job_id} not found."
+        )
+
+    state = state_snapshot.values
+
+    # HARD GATE LOCK RULE 1:
+    # Export endpoints are physically locked if hard_gate_triggered is True and human_approved is False
+    if state.get("hard_gate_triggered", False) and not state.get("human_approved", False):
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Export locked: Hard Gate triggered due to entity discrepancy. Operator approval required."
         )
 
     normalized_fmt = format_type.lower()
@@ -187,15 +239,43 @@ async def export_deliverable(format_type: str, job_id: str):
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported export format: {format_type}. Supported: pptx, docx"
+            detail=f"Unsupported format: {format_type}. Allowed: pptx, docx"
         )
 
     file_path = os.path.join(DATA_DIR, f"{job_id}_export.{ext}")
 
-    # If file doesn't exist yet, create mock file placeholder
+    # Generate if not already present on disk
     if not os.path.exists(file_path):
-        with open(file_path, "wb") as f:
-            f.write(b"MOCK_EXPORT_FILE_CONTENT")
+        drafts = state.get("draft_outputs", {})
+        if ext == "pptx":
+            pres_data = drafts.get("presentation") or {
+                "deck_title": "Sentinel-Transform Intelligence Briefing",
+                "target_audience": "Command Leadership",
+                "slides": [
+                    {
+                        "slide_number": 1,
+                        "title": "Incident Overview",
+                        "bullet_points": ["Verified containment achieved", "No data exfiltration observed"],
+                        "visual_guidance": "Single column summary card",
+                        "speaker_notes": "Briefing on verified security posture.",
+                        "slide_reference_citations": ["doc_01_chunk_01"]
+                    }
+                ]
+            }
+            export_pptx(pres_data, file_path)
+        elif ext == "docx":
+            adv_data = drafts.get("advisory") or {
+                "advisory_id": "NTRO-ADV-2026-09",
+                "title": "Firmware Vulnerability Exploited in Substation Control Software",
+                "severity_level": "HIGH",
+                "threat_overview": "An unpatched firmware vulnerability was detected and remediated.",
+                "affected_systems": ["Substation control software"],
+                "indicators_of_compromise": ["Unpatched firmware vulnerability (CVE pending)"],
+                "recommended_mitigations": ["Apply emergency firmware patches"],
+                "compliance_and_governance": "Report to Directorate within 24 hours.",
+                "cited_chunk_ids": ["doc_01_chunk_01"]
+            }
+            export_docx(adv_data, file_path)
 
     return FileResponse(
         path=file_path,
