@@ -1,0 +1,38 @@
+{
+  "advisory": {
+    "advisory_id": "NTRO-ADV-2026-09",
+    "title": "Firmware Vulnerability Exploited in Substation Control Software",
+    "severity_level": "HIGH",
+    "threat_overview": "An unpatched firmware vulnerability was exploited to gain unauthorized access to substation control software at two grid facilities.",
+    "affected_systems": ["Substation control software", "Grid facility endpoints"],
+    "indicators_of_compromise": ["Unpatched firmware vulnerability (CVE pending)"],
+    "recommended_mitigations": [
+      "Apply emergency firmware patches to all substation control endpoints",
+      "Audit scheduled task logs for anomalous access patterns"
+    ],
+    "compliance_and_governance": "Report to Directorate of Power Grid Resilience within 24 hours per standing protocol.",
+    "cited_chunk_ids": ["doc_01_chunk_01", "doc_01_chunk_02"]
+  },
+  "exec_summary": {
+    "situation_overview": "A firmware vulnerability was exploited against substation control software, affecting two grid endpoints; remediation is complete.",
+    "core_findings": [
+      "Two endpoints confirmed infected via unpatched firmware vulnerability",
+      "Directorate of Power Grid Resilience confirms remediation complete",
+      "No threat actor attribution established"
+    ],
+    "strategic_impact": "Limited to two facilities; no cascading grid failure observed.",
+    "decisions_required": ["Approve mandatory firmware patch rollout schedule"],
+    "confidence_assessment": "HIGH",
+    "cited_chunk_ids": ["doc_01_chunk_01", "doc_01_chunk_02"]
+  },
+  "linkedin": {
+    "headline": "Grid Resilience in Action: Rapid Response to Firmware Exploit",
+    "opening_hook": "Two grid endpoints. One unpatched vulnerability. A same-day remediation.",
+    "body_paragraphs": ["Sample generated paragraph for fixture testing."],
+    "key_takeaways": ["Patch fast", "Audit logs", "Report through proper channels"],
+    "call_to_action": "Review your firmware patch cadence today.",
+    "hashtags": ["#CyberSecurity", "#GridResilience"],
+    "cited_chunk_ids": ["doc_01_chunk_01"]
+  },
+  "note": "This fixture file exists so Verification, Export, and Frontend teammates can build and test against realistic schema-shaped data before the LLM/Prompt Engineer's real generator node is ready. Replace with live output at integration."
+}
