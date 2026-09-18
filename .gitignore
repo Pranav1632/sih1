@@ -1,12 +1,35 @@
+# Data and runtime artifacts
 data/*
 !data/.gitkeep
+
+# Python artifacts
 __pycache__/
 *.py[cod]
 *$py.class
-*.db
-.pytest_cache/
-node_modules/
+*.so
+.Python
+
+# Environments
 venv/
+.venv/
+env/
+ENV/
+
+# Configuration and secrets
 .env
+.env.local
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Testing & Build caches
+.pytest_cache/
 dist/
 build/
+node_modules/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
