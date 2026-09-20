@@ -74,11 +74,12 @@ REQUIREMENTS:
 }
 
 
-def format_source_chunks_context(chunks: List[Dict[str, Any]], max_chunks: int = 20) -> str:
+def format_source_chunks_context(chunks: List[Dict[str, Any]], max_chunks: int = 6) -> str:
     """
     Formats source chunks into structured text for LLM prompting.
     When a document has many chunks (e.g. 118 chunks across 20 pages),
     samples uniformly across all pages to provide full end-to-end document research.
+    Optimized for fast local CPU inference (< 15s per format).
     """
     if not chunks:
         return "No source evidence chunks provided."

@@ -294,49 +294,46 @@ def generate_single_format(
     )
 
     # Attempt ChatOllama structured output with mandatory local LLM
-    models_to_try = [settings.OLLAMA_MODEL_DEV]
-    if "llama3.2:1b" not in models_to_try:
-        models_to_try.append("llama3.2:1b")
+    model_name = settings.OLLAMA_MODEL_DEV
 
-    for model_name in models_to_try:
-        try:
-            from langchain_ollama import ChatOllama
-            from langchain_core.messages import SystemMessage, HumanMessage
+    try:
+        from langchain_ollama import ChatOllama
+        from langchain_core.messages import SystemMessage, HumanMessage
 
-            logger.info(f"[LLM_SYNTHESIZER] Requesting structured output for '{norm_key}' via local Ollama ({model_name})...")
-            llm = ChatOllama(
-                base_url=settings.OLLAMA_HOST,
-                model=model_name,
-                temperature=0.1,
-                timeout=120.0,
-            )
-            structured_llm = llm.with_structured_output(schema_cls)
-            messages = [
-                SystemMessage(content=prompt_bundle["system"]),
-                HumanMessage(content=prompt_bundle["user"]),
-            ]
-            result = structured_llm.invoke(messages)
-            default_citations = [c.get("chunk_id") for c in chunks if c.get("chunk_id")][:2]
-            if not default_citations:
-                default_citations = ["doc_01_chunk_01"]
+        logger.info(f"[LLM_SYNTHESIZER] Requesting structured output for '{norm_key}' via local Ollama ({model_name})...")
+        llm = ChatOllama(
+            base_url=settings.OLLAMA_HOST,
+            model=model_name,
+            temperature=0.1,
+            timeout=35.0,
+        )
+        structured_llm = llm.with_structured_output(schema_cls)
+        messages = [
+            SystemMessage(content=prompt_bundle["system"]),
+            HumanMessage(content=prompt_bundle["user"]),
+        ]
+        result = structured_llm.invoke(messages)
+        default_citations = [c.get("chunk_id") for c in chunks if c.get("chunk_id")][:2]
+        if not default_citations:
+            default_citations = ["doc_01_chunk_01"]
 
-            out = None
-            if isinstance(result, BaseModel):
-                out = result.model_dump()
-            elif isinstance(result, dict):
-                out = schema_cls.model_validate(result).model_dump()
+        out = None
+        if isinstance(result, BaseModel):
+            out = result.model_dump()
+        elif isinstance(result, dict):
+            out = schema_cls.model_validate(result).model_dump()
 
-            if out is not None:
-                if "cited_chunk_ids" in out and not out["cited_chunk_ids"]:
-                    out["cited_chunk_ids"] = default_citations
-                if "slides" in out and isinstance(out["slides"], list):
-                    for s in out["slides"]:
-                        if isinstance(s, dict) and not s.get("slide_reference_citations"):
-                            s["slide_reference_citations"] = default_citations[:1]
-                logger.info(f"[LLM_SYNTHESIZER] Successfully generated structured output for '{norm_key}' using {model_name}.")
-                return out
-        except Exception as e:
-            logger.warning(f"[LLM_SYNTHESIZER] Local model {model_name} invocation failed for '{norm_key}': {e}")
+        if out is not None:
+            if "cited_chunk_ids" in out and not out["cited_chunk_ids"]:
+                out["cited_chunk_ids"] = default_citations
+            if "slides" in out and isinstance(out["slides"], list):
+                for s in out["slides"]:
+                    if isinstance(s, dict) and not s.get("slide_reference_citations"):
+                        s["slide_reference_citations"] = default_citations[:1]
+            logger.info(f"[LLM_SYNTHESIZER] Successfully generated structured output for '{norm_key}' using {model_name}.")
+            return out
+    except Exception as e:
+        logger.warning(f"[LLM_SYNTHESIZER] Local model {model_name} invocation failed for '{norm_key}': {e}")
 
     logger.warning(f"[LLM_SYNTHESIZER] All local Ollama attempts completed. Using deterministic grounded document synthesis for '{norm_key}'.")
 
