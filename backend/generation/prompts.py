@@ -12,6 +12,7 @@ CARDINAL PRINCIPLES:
 1. THE SOURCE IS THE ABSOLUTE FACTUAL AUTHORITY: Output deliverables may adapt style, tone, and format, but may NEVER invent facts, statistics, IOCs, CVEs, or organizational entities not grounded in the source text.
 2. CITATION REQUIREMENT: You MUST include the exact source `chunk_id` in the `cited_chunk_ids` field for every claim or section. Never invent or hallucinate chunk IDs.
 3. AIR-GAPPED DEFENSE COMPLIANCE: Do not suggest external cloud APIs, cloud scanners, or third-party online tools in remediations or technical notes.
+4. MAXIMUM TECHNICAL DEPTH & SPECIFICITY: Thoroughly research the provided chunks. Extract concrete technical metrics, material properties, physical dimensions, nanometer scales, chemical classifications, and quantitative findings directly from the evidence. Deliver dense, high-substance deliverables with zero fluff.
 """
 
 FORMAT_SYSTEM_PROMPTS: Dict[str, str] = {
@@ -74,12 +75,12 @@ REQUIREMENTS:
 }
 
 
-def format_source_chunks_context(chunks: List[Dict[str, Any]], max_chunks: int = 6) -> str:
+def format_source_chunks_context(chunks: List[Dict[str, Any]], max_chunks: int = 12) -> str:
     """
     Formats source chunks into structured text for LLM prompting.
     When a document has many chunks (e.g. 118 chunks across 20 pages),
-    samples uniformly across all pages to provide full end-to-end document research.
-    Optimized for fast local CPU inference (< 15s per format).
+    samples uniformly across all pages to provide deep, comprehensive end-to-end document research.
+    Calibrated for rich technical depth within a ~2 to 3 minute local CPU execution window.
     """
     if not chunks:
         return "No source evidence chunks provided."

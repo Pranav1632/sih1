@@ -305,7 +305,7 @@ def generate_single_format(
             base_url=settings.OLLAMA_HOST,
             model=model_name,
             temperature=0.1,
-            timeout=35.0,
+            timeout=65.0,
         )
         structured_llm = llm.with_structured_output(schema_cls)
         messages = [
