@@ -23,6 +23,16 @@ def get_spacy_nlp():
     return _nlp
 
 
+COMMON_NON_ENTITIES = {
+    "enforce", "apply", "audit", "review", "mandate", "report", "conduct",
+    "ensure", "deploy", "maintain", "perform", "execute", "coordinate",
+    "isolate", "quarantine", "implement", "monitor", "investigate", "remediate",
+    "verify", "validate", "assess", "mitigate", "establish", "determine",
+    "directive", "directives", "action", "actions", "overview", "summary",
+    "impact", "remediation", "threat", "vector", "operation", "operations"
+}
+
+
 def clean_entity_text(text: str) -> str:
     """Normalizes whitespace and strips leading determiners (the, a, an)."""
     cleaned = re.sub(r"^(the|a|an)\s+", "", text.strip(), flags=re.IGNORECASE).strip()
@@ -75,6 +85,8 @@ def run_entity_verification(
     for raw_ent in raw_entities:
         clean_draft = clean_entity_text(raw_ent)
         if not clean_draft or clean_draft in seen_drafts:
+            continue
+        if clean_draft.lower() in COMMON_NON_ENTITIES:
             continue
         seen_drafts.add(clean_draft)
 
