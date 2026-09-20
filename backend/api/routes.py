@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import uuid
 import logging
@@ -392,14 +393,24 @@ async def export_deliverable(format_type: str, job_id: str):
     normalized_fmt = format_type.lower()
     if normalized_fmt in ["pptx", "presentation"]:
         ext = "pptx"
+        fmt_label = "presentation"
         media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     elif normalized_fmt in ["docx", "advisory"]:
         ext = "docx"
+        fmt_label = "advisory"
         media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    elif normalized_fmt in ["json", "all"]:
+        ext = "json"
+        fmt_label = "deliverables_bundle"
+        media_type = "application/json"
+    elif normalized_fmt in ["md", "markdown"]:
+        ext = "md"
+        fmt_label = "deliverable_brief"
+        media_type = "text/markdown"
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported format: {format_type}. Allowed: pptx, docx"
+            detail=f"Unsupported format: {format_type}. Allowed: pptx, docx, json, md"
         )
 
     file_path = os.path.join(DATA_DIR, f"{job_id}_export.{ext}")
@@ -426,19 +437,40 @@ async def export_deliverable(format_type: str, job_id: str):
         elif ext == "docx":
             adv_data = drafts.get("advisory") or {
                 "advisory_id": "NTRO-ADV-2026-09",
-                "title": "Firmware Vulnerability Exploited in Substation Control Software",
+                "title": "Security Intelligence Advisory",
                 "severity_level": "HIGH",
-                "threat_overview": "An unpatched firmware vulnerability was detected and remediated.",
-                "affected_systems": ["Substation control software"],
-                "indicators_of_compromise": ["Unpatched firmware vulnerability (CVE pending)"],
-                "recommended_mitigations": ["Apply emergency firmware patches"],
-                "compliance_and_governance": "Report to Directorate within 24 hours.",
+                "threat_overview": "Operational disruption was detected and remediated.",
+                "affected_systems": ["Monitored network systems"],
+                "indicators_of_compromise": ["Suspicious operational activity detected"],
+                "recommended_mitigations": ["Apply recommended security patches"],
+                "compliance_and_governance": "Report to designated leadership within 24 hours.",
                 "cited_chunk_ids": ["doc_01_chunk_01"]
             }
             export_docx(adv_data, file_path)
+        elif ext == "json":
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(drafts, f, indent=2)
+        elif ext == "md":
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(f"# Sovereign Intelligence Deliverables Bundle: {job_id}\n\n")
+                for k, v in drafts.items():
+                    f.write(f"## {k.upper()}\n\n```json\n{json.dumps(v, indent=2)}\n```\n\n")
+
+    # Determine real document basename for user-friendly download filename
+    meta = JOB_METADATA.get(job_id, {})
+    files = meta.get("files", [])
+    doc_base = "sentinel_intelligence"
+    if files and files[0].get("filename"):
+        raw_name = files[0]["filename"]
+        base_no_ext = os.path.splitext(raw_name)[0]
+        cleaned = re.sub(r'[^a-zA-Z0-9_\-]', '_', base_no_ext)
+        if cleaned:
+            doc_base = cleaned
+
+    download_filename = f"{doc_base}_{fmt_label}.{ext}"
 
     return FileResponse(
         path=file_path,
         media_type=media_type,
-        filename=f"sentinel_{job_id}.{ext}"
+        filename=download_filename
     )

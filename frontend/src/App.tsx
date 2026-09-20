@@ -432,6 +432,102 @@ export const App: React.FC = () => {
     setTimeout(() => setCopiedNotification(false), 2000);
   };
 
+  // Download Active Deliverable in its native format
+  const handleDownloadActiveDeliverable = () => {
+    const data = draftOutputs[activeDeliverableTab];
+    if (!data) return;
+
+    if (activeDeliverableTab === 'presentation' && jobId && humanApproved) {
+      window.location.href = getExportUrl('pptx', jobId);
+      return;
+    }
+    if (activeDeliverableTab === 'advisory' && jobId && humanApproved) {
+      window.location.href = getExportUrl('docx', jobId);
+      return;
+    }
+
+    const docBaseName = files[0]?.name ? files[0].name.replace(/\.[^/.]+$/, '') : 'deliverable';
+    let content = '';
+    let ext = 'txt';
+    let mimeType = 'text/plain';
+
+    if (activeDeliverableTab === 'exec_summary') {
+      ext = 'md';
+      mimeType = 'text/markdown';
+      content = `# Executive Situational Briefing: ${docBaseName}\n\n` +
+        `**Confidence Assessment:** ${data.confidence_assessment || 'HIGH'}\n\n` +
+        `## Situation Overview\n${data.situation_overview || ''}\n\n` +
+        `## Core Findings\n` +
+        (data.core_findings?.map((f: string, i: number) => `${i + 1}. ${f}`).join('\n') || '') +
+        `\n\n## Strategic Infrastructure Impact\n${data.strategic_impact || ''}\n\n` +
+        `## Leadership Decisions Required\n` +
+        (data.decisions_required?.map((d: string) => `- [ ] ${d}`).join('\n') || '');
+    } else if (activeDeliverableTab === 'linkedin') {
+      ext = 'txt';
+      content = `${data.headline || ''}\n\n${data.opening_hook || ''}\n\n` +
+        (data.body_paragraphs?.join('\n\n') || '') +
+        `\n\nKey Takeaways:\n` +
+        (data.key_takeaways?.map((t: string) => `• ${t}`).join('\n') || '') +
+        `\n\n${data.hashtags?.join(' ') || ''}`;
+    } else if (activeDeliverableTab === 'twitter') {
+      ext = 'txt';
+      content =
+        data.tweets?.map((t: any) => `[Tweet ${t.tweet_number || 1}]\n${t.content}`).join('\n\n---\n\n') ||
+        '';
+    } else if (activeDeliverableTab === 'video') {
+      ext = 'md';
+      mimeType = 'text/markdown';
+      content = `# Video Script: ${data.video_title || docBaseName}\n` +
+        `Target Duration: ${data.target_duration || '60s'}\n` +
+        `Logline: ${data.logline || ''}\n\n` +
+        (data.scenes
+          ?.map(
+            (s: any) =>
+              `### Scene ${s.scene_number} (${s.duration_seconds}s)\n- **Visual:** ${s.visual_description}\n- **Audio:** "${s.narration_voiceover}"\n- **Subtitles:** ${s.on_screen_subtitles || ''}`
+          )
+          .join('\n\n') || '');
+    } else if (activeDeliverableTab === 'infographic') {
+      ext = 'json';
+      mimeType = 'application/json';
+      content = JSON.stringify(data, null, 2);
+    } else {
+      ext = 'json';
+      mimeType = 'application/json';
+      content = JSON.stringify(data, null, 2);
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${docBaseName}_${activeDeliverableTab}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const getFormatDownloadLabel = (tab: string) => {
+    switch (tab) {
+      case 'presentation':
+        return 'Download .pptx';
+      case 'advisory':
+        return 'Download .docx';
+      case 'exec_summary':
+        return 'Download Brief (.md)';
+      case 'linkedin':
+        return 'Download Post (.txt)';
+      case 'twitter':
+        return 'Download Thread (.txt)';
+      case 'video':
+        return 'Download Script (.md)';
+      case 'infographic':
+        return 'Download Blueprint (.json)';
+      default:
+        return 'Download Deliverable';
+    }
+  };
+
   const primaryDoc = files.find((f) => f.role === 'PRIMARY')?.name;
 
   return (
@@ -650,30 +746,59 @@ export const App: React.FC = () => {
 
               {/* Action Toolbar */}
               <div className="flex items-center gap-2 shrink-0">
+                {/* 1. Dynamic Download Button for Active Deliverable */}
+                {draftOutputs[activeDeliverableTab] && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadActiveDeliverable}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs transition-all"
+                    title={`Download ${activeDeliverableTab} deliverable`}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{getFormatDownloadLabel(activeDeliverableTab)}</span>
+                  </button>
+                )}
+
+                {/* 2. Standard Compiled Exporters (.pptx, .docx, .json) */}
                 {jobId && humanApproved && (
                   <>
-                    <a
-                      href={getExportUrl('pptx', jobId)}
-                      download
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-800 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
-                      title="Download Editable PowerPoint"
-                    >
-                      <Download className="w-3.5 h-3.5 text-neutral-600" />
-                      <span>Download .pptx</span>
-                    </a>
+                    {activeDeliverableTab !== 'presentation' && (
+                      <a
+                        href={getExportUrl('pptx', jobId)}
+                        download
+                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
+                        title="Download Presentation (.pptx)"
+                      >
+                        <Presentation className="w-3.5 h-3.5 text-neutral-500" />
+                        <span>.pptx</span>
+                      </a>
+                    )}
+
+                    {activeDeliverableTab !== 'advisory' && (
+                      <a
+                        href={getExportUrl('docx', jobId)}
+                        download
+                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
+                        title="Download Formal Advisory (.docx)"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-neutral-500" />
+                        <span>.docx</span>
+                      </a>
+                    )}
 
                     <a
-                      href={getExportUrl('docx', jobId)}
+                      href={getExportUrl('json', jobId)}
                       download
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-800 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
-                      title="Download Formal Advisory DOCX"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
+                      title="Download All Formats (.json bundle)"
                     >
-                      <Download className="w-3.5 h-3.5 text-neutral-600" />
-                      <span>Download .docx</span>
+                      <Download className="w-3.5 h-3.5 text-neutral-500" />
+                      <span>.json</span>
                     </a>
                   </>
                 )}
 
+                {/* 3. Copy Button */}
                 <button
                   type="button"
                   onClick={handleCopyContent}
