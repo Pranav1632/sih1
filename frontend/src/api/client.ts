@@ -324,6 +324,8 @@ export async function ingestFiles(
 ): Promise<IngestResponse> {
   const formData = new FormData();
   files.forEach((item, index) => {
+    formData.append('files', item.file);
+    formData.append('source_role', item.role);
     formData.append(`file_${index}`, item.file);
     formData.append(`role_${index}`, item.role);
   });

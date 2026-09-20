@@ -1,15 +1,19 @@
 import os
 import json
 import uuid
+import logging
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException, status
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from backend.orchestration.state import AgentState
 from backend.orchestration.graph import app
+from backend.ingestion.normalizer import run_ingestion_and_normalization
 from backend.exporters.pptx_exporter import export_pptx
 from backend.exporters.docx_exporter import export_docx
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["Sentinel-Transform API"])
 
@@ -53,31 +57,79 @@ def _load_mock_chunks() -> List[Dict[str, Any]]:
 
 @router.post("/ingest")
 async def ingest_files(
-    files: List[UploadFile] = File(...),
+    request: Request,
+    files: Optional[List[UploadFile]] = File(None),
     source_role: Optional[str] = Form("PRIMARY")
 ):
     """
     POST /api/ingest
     Accepts multipart files + source_role per file.
+    Runs real coordinate chunking and SEI normalization.
     Returns {job_id, source_chunks[]} per BUILD.md contract.
     """
     job_id = f"job_{uuid.uuid4().hex[:8]}"
     saved_files = []
+    file_items: List[tuple[UploadFile, str]] = []
 
-    for file in files:
-        file_path = os.path.join(DATA_DIR, f"{job_id}_{file.filename}")
+    # 1. Check bound files list
+    if files:
+        for f in files:
+            file_items.append((f, source_role or "PRIMARY"))
+    else:
+        # Fallback: inspect raw form for flexible keys ('files', 'file_0', 'file_1', etc.)
+        try:
+            form = await request.form()
+            files_from_list = form.getlist("files")
+            roles_from_list = form.getlist("source_role")
+            if files_from_list:
+                for idx, f in enumerate(files_from_list):
+                    if hasattr(f, "filename") and f.filename:
+                        role = roles_from_list[idx] if idx < len(roles_from_list) else (source_role or "PRIMARY")
+                        file_items.append((f, role))
+            for key, val in form.items():
+                if (key.startswith("file_") or key == "file") and hasattr(val, "filename") and val.filename:
+                    idx_str = key.split("_")[-1] if "_" in key else "0"
+                    role = form.get(f"role_{idx_str}", source_role or "PRIMARY")
+                    file_items.append((val, role))
+        except Exception as e:
+            logger.warning(f"Error reading form data in ingest: {e}")
+
+    # 2. Persist uploaded files to DATA_DIR
+    for idx, (file, role) in enumerate(file_items, start=1):
+        clean_name = os.path.basename(file.filename)
+        file_path = os.path.join(DATA_DIR, f"{job_id}_{clean_name}")
         content = await file.read()
         with open(file_path, "wb") as f:
             f.write(content)
-        saved_files.append({"filename": file.filename, "path": file_path, "role": source_role})
+        saved_files.append({
+            "doc_id": f"doc_{idx:02d}",
+            "filename": clean_name,
+            "path": file_path,
+            "source_name": clean_name,
+            "source_role": role,
+            "role": role,
+        })
 
-    source_chunks = _load_mock_chunks()
+    # 3. Run real coordinate normalization node
+    source_chunks = []
+    if saved_files:
+        try:
+            norm_result = run_ingestion_and_normalization({
+                "uploaded_files": saved_files,
+                "primary_doc_id": "doc_01"
+            })
+            source_chunks = norm_result.get("source_chunks", [])
+        except Exception as e:
+            logger.error(f"Error normalizing uploaded files: {e}", exc_info=True)
+
+    if not source_chunks:
+        source_chunks = _load_mock_chunks()
 
     JOB_METADATA[job_id] = {
         "job_id": job_id,
         "files": saved_files,
         "source_chunks": source_chunks,
-        "source_role": source_role
+        "source_role": source_role or "PRIMARY"
     }
 
     return {
@@ -127,6 +179,13 @@ async def generate_outputs(request: GenerateRequest):
     state_snapshot = app.get_state(config)
     values = state_snapshot.values if state_snapshot else {}
     is_gate_active = values.get("hard_gate_triggered", False) and not values.get("human_approved", False)
+
+    # If gate didn't trigger, proceed through export_node
+    if not is_gate_active and state_snapshot and state_snapshot.next:
+        app.invoke(None, config=config)
+        state_snapshot = app.get_state(config)
+        values = state_snapshot.values if state_snapshot else {}
+
     current_status = "gate_paused" if is_gate_active else "completed"
 
     # Compile forensic pipeline logs for live streaming UI

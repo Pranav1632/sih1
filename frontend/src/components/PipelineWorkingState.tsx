@@ -16,7 +16,16 @@ import {
 import { PipelineLogEvent, EntityDiscrepancy } from '../api/client';
 
 export interface PipelineWorkingStateProps {
-  executionPhase: 'idle' | 'ingesting' | 'generating' | 'evaluating_gate' | 'hard_gate_halted' | 'completed';
+  executionPhase:
+    | 'idle'
+    | 'ingesting'
+    | 'extracting'
+    | 'generating'
+    | 'reflecting'
+    | 'evaluating_gate'
+    | 'exporting'
+    | 'hard_gate_halted'
+    | 'completed';
   jobId: string;
   logs: PipelineLogEvent[];
   discrepancies: EntityDiscrepancy[];
@@ -45,7 +54,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
       id: 'ingestion_node',
       title: 'Ingestion & Normalizer',
       desc: 'Coordinate chunking & SEI indexing',
-      isCompleted: executionPhase !== 'idle' && executionPhase !== 'ingesting',
+      isCompleted: !['idle', 'ingesting'].includes(executionPhase),
       isRunning: executionPhase === 'ingesting',
       isPaused: false,
     },
@@ -53,15 +62,15 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
       id: 'context_node',
       title: 'Context & Entity Extractor',
       desc: 'spaCy NER (ORG, GPE, TECH)',
-      isCompleted: ['generating', 'evaluating_gate', 'hard_gate_halted', 'completed'].includes(executionPhase),
-      isRunning: false,
+      isCompleted: !['idle', 'ingesting', 'extracting'].includes(executionPhase),
+      isRunning: executionPhase === 'extracting',
       isPaused: false,
     },
     {
       id: 'generator_node',
       title: 'Parallel Format Generator',
       desc: `Pydantic schema synthesis (${formatsCount} formats)`,
-      isCompleted: ['evaluating_gate', 'hard_gate_halted', 'completed'].includes(executionPhase),
+      isCompleted: !['idle', 'ingesting', 'extracting', 'generating'].includes(executionPhase),
       isRunning: executionPhase === 'generating',
       isPaused: false,
     },
@@ -69,15 +78,15 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
       id: 'reflection_node',
       title: '2-Pass Bounded Reflection',
       desc: 'Structural audit & 0 cloud telemetry (<=1 retry)',
-      isCompleted: ['evaluating_gate', 'hard_gate_halted', 'completed'].includes(executionPhase),
-      isRunning: false,
+      isCompleted: !['idle', 'ingesting', 'extracting', 'generating', 'reflecting'].includes(executionPhase),
+      isRunning: executionPhase === 'reflecting',
       isPaused: false,
     },
     {
       id: 'verification_gate_node',
       title: 'Deterministic Verification Gate',
       desc: 'Sub-10ms CPU RapidFuzz matching (75-99% band)',
-      isCompleted: executionPhase === 'completed',
+      isCompleted: ['exporting', 'completed'].includes(executionPhase),
       isRunning: executionPhase === 'evaluating_gate',
       isPaused: executionPhase === 'hard_gate_halted',
     },
@@ -86,7 +95,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
       title: 'Deterministic Exporters',
       desc: 'python-pptx & python-docx compiler',
       isCompleted: executionPhase === 'completed',
-      isRunning: false,
+      isRunning: executionPhase === 'exporting',
       isPaused: executionPhase === 'hard_gate_halted',
     },
   ];

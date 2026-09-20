@@ -82,7 +82,7 @@ def synthesize_heuristic_draft(
             elif isinstance(ent, str):
                 entities.append(ent)
     
-    first_entity = entities[0] if entities else "Directorate of Power Grid Resilience"
+    first_entity = entities[0] if entities else "designated command staff"
 
     if format_key == "linkedin":
         return LinkedInSchema(
