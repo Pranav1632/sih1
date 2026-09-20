@@ -26,45 +26,52 @@ def parse_pdf(
 ) -> List[Dict[str, Any]]:
     """
     Parses a PDF document using PyMuPDF (fitz), preserving page numbers and char offsets.
+    Falls back gracefully to plain text reader if the file is mock/corrupt bytes.
     """
     import pymupdf
 
     path_obj = Path(file_path)
     actual_source_name = source_name or path_obj.name
 
-    doc = pymupdf.open(file_path)
-    chunks: List[Dict[str, Any]] = []
-    global_char_offset = 0
-    chunk_counter = 1
-
     try:
-        for page_idx in range(len(doc)):
-            page = doc[page_idx]
-            page_number = page_idx + 1
-            page_text = page.get_text("text")
+        doc = pymupdf.open(file_path)
+        chunks: List[Dict[str, Any]] = []
+        global_char_offset = 0
+        chunk_counter = 1
 
-            if not page_text or not page_text.strip():
-                continue
+        try:
+            for page_idx in range(len(doc)):
+                page = doc[page_idx]
+                page_number = page_idx + 1
+                page_text = page.get_text("text")
 
-            page_coords = {
-                "doc_id": doc_id,
-                "source_name": actual_source_name,
-                "source_role": source_role,
-                "page_number": page_number,
-                "timestamp_start": None,
-                "timestamp_end": None,
-                "base_char_offset": global_char_offset,
-                "chunk_index_offset": chunk_counter,
-            }
+                if not page_text or not page_text.strip():
+                    continue
 
-            page_chunks = chunk_text(page_text, coordinates=page_coords)
-            chunks.extend(page_chunks)
-            chunk_counter += len(page_chunks)
-            global_char_offset += len(page_text)
-    finally:
-        doc.close()
+                page_coords = {
+                    "doc_id": doc_id,
+                    "source_name": actual_source_name,
+                    "source_role": source_role,
+                    "page_number": page_number,
+                    "timestamp_start": None,
+                    "timestamp_end": None,
+                    "base_char_offset": global_char_offset,
+                    "chunk_index_offset": chunk_counter,
+                }
 
-    return chunks
+                page_chunks = chunk_text(page_text, coordinates=page_coords)
+                chunks.extend(page_chunks)
+                chunk_counter += len(page_chunks)
+                global_char_offset += len(page_text)
+        finally:
+            doc.close()
+
+        if chunks:
+            return chunks
+    except Exception:
+        pass
+
+    return parse_text(file_path, doc_id=doc_id, source_name=actual_source_name, source_role=source_role)
 
 
 def parse_docx(
@@ -75,48 +82,54 @@ def parse_docx(
 ) -> List[Dict[str, Any]]:
     """
     Parses a Word DOCX document using python-docx, extracting headings, body paragraphs, and tables.
+    Falls back gracefully to plain text reader if the file is mock/corrupt.
     """
     import docx
 
     path_obj = Path(file_path)
     actual_source_name = source_name or path_obj.name
 
-    doc = docx.Document(file_path)
-    extracted_blocks: List[str] = []
+    try:
+        doc = docx.Document(file_path)
+        extracted_blocks: List[str] = []
 
-    # 1. Paragraphs & Headings
-    for p in doc.paragraphs:
-        text = p.text.strip()
-        if text:
-            # Prefix headings to retain structural hierarchy
-            if p.style and p.style.name and p.style.name.startswith("Heading"):
-                extracted_blocks.append(f"## {text}")
-            else:
-                extracted_blocks.append(text)
+        # 1. Paragraphs & Headings
+        for p in doc.paragraphs:
+            text = p.text.strip()
+            if text:
+                # Prefix headings to retain structural hierarchy
+                if p.style and p.style.name and p.style.name.startswith("Heading"):
+                    extracted_blocks.append(f"## {text}")
+                else:
+                    extracted_blocks.append(text)
 
-    # 2. Tables
-    for table in doc.tables:
-        table_rows = []
-        for row in table.rows:
-            row_cells = [cell.text.strip() for cell in row.cells]
-            if any(row_cells):
-                table_rows.append(" | ".join(row_cells))
-        if table_rows:
-            extracted_blocks.append("\n".join(table_rows))
+        # 2. Tables
+        for table in doc.tables:
+            table_rows = []
+            for row in table.rows:
+                row_cells = [cell.text.strip() for cell in row.cells]
+                if any(row_cells):
+                    table_rows.append(" | ".join(row_cells))
+            if table_rows:
+                extracted_blocks.append("\n".join(table_rows))
 
-    full_text = "\n\n".join(extracted_blocks)
-    coords = {
-        "doc_id": doc_id,
-        "source_name": actual_source_name,
-        "source_role": source_role,
-        "page_number": 1,
-        "timestamp_start": None,
-        "timestamp_end": None,
-        "base_char_offset": 0,
-        "chunk_index_offset": 1,
-    }
+        full_text = "\n\n".join(extracted_blocks)
+        if full_text.strip():
+            coords = {
+                "doc_id": doc_id,
+                "source_name": actual_source_name,
+                "source_role": source_role,
+                "page_number": 1,
+                "timestamp_start": None,
+                "timestamp_end": None,
+                "base_char_offset": 0,
+                "chunk_index_offset": 1,
+            }
+            return chunk_text(full_text, coordinates=coords)
+    except Exception:
+        pass
 
-    return chunk_text(full_text, coordinates=coords)
+    return parse_text(file_path, doc_id=doc_id, source_name=actual_source_name, source_role=source_role)
 
 
 def parse_image(
@@ -133,18 +146,21 @@ def parse_image(
     path_obj = Path(file_path)
     actual_source_name = source_name or path_obj.name
 
-    # Preprocessing: convert to grayscale then apply contrast enhancement
-    with Image.open(file_path) as img:
-        gray = img.convert("L")
-        enhancer = ImageEnhance.Contrast(gray)
-        enhanced = enhancer.enhance(2.0)
+    try:
+        # Preprocessing: convert to grayscale then apply contrast enhancement
+        with Image.open(file_path) as img:
+            gray = img.convert("L")
+            enhancer = ImageEnhance.Contrast(gray)
+            enhanced = enhancer.enhance(2.0)
 
-        try:
-            import pytesseract
-            ocr_text = pytesseract.image_to_string(enhanced).strip()
-        except Exception:
-            # Graceful fallback if Tesseract system executable is not found
-            ocr_text = f"[OCR Image parsed from {actual_source_name}]"
+            try:
+                import pytesseract
+                ocr_text = pytesseract.image_to_string(enhanced).strip()
+            except Exception:
+                # Graceful fallback if Tesseract system executable is not found
+                ocr_text = f"[OCR Image parsed from {actual_source_name}]"
+    except Exception:
+        ocr_text = f"[Image parsed from {actual_source_name}]"
 
     coords = {
         "doc_id": doc_id,

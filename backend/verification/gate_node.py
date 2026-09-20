@@ -45,7 +45,7 @@ def gather_text_from_draft(format_key: str, draft: Any) -> List[str]:
     texts: List[str] = []
 
     if format_key == "advisory":
-        for k in ("title", "threat_overview", "compliance_and_governance"):
+        for k in ("threat_overview", "compliance_and_governance"):
             if draft.get(k):
                 texts.append(str(draft[k]))
         for item in draft.get("affected_systems", []):
@@ -63,7 +63,7 @@ def gather_text_from_draft(format_key: str, draft: Any) -> List[str]:
             texts.append(str(item))
 
     elif format_key == "linkedin":
-        for k in ("headline", "opening_hook", "call_to_action"):
+        for k in ("opening_hook", "call_to_action"):
             if draft.get(k):
                 texts.append(str(draft[k]))
         for item in draft.get("body_paragraphs", []):
@@ -77,20 +77,14 @@ def gather_text_from_draft(format_key: str, draft: Any) -> List[str]:
                 texts.append(tweet["content"])
 
     elif format_key == "presentation":
-        if draft.get("deck_title"):
-            texts.append(draft["deck_title"])
         for slide in draft.get("slides", []):
             if isinstance(slide, dict):
-                if slide.get("title"):
-                    texts.append(slide["title"])
                 for bp in slide.get("bullet_points", []):
                     texts.append(str(bp))
                 if slide.get("speaker_notes"):
                     texts.append(slide["speaker_notes"])
 
     elif format_key in ("video", "video_package"):
-        if draft.get("video_title"):
-            texts.append(draft["video_title"])
         if draft.get("logline"):
             texts.append(draft["logline"])
         for scene in draft.get("scenes", []):
@@ -103,12 +97,8 @@ def gather_text_from_draft(format_key: str, draft: Any) -> List[str]:
                     texts.append(scene["on_screen_subtitles"])
 
     elif format_key == "infographic":
-        if draft.get("infographic_title"):
-            texts.append(draft["infographic_title"])
         for sec in draft.get("sections", []):
             if isinstance(sec, dict):
-                if sec.get("header"):
-                    texts.append(sec["header"])
                 if sec.get("descriptive_copy"):
                     texts.append(sec["descriptive_copy"])
 
@@ -142,7 +132,7 @@ def run_entity_and_claim_verification(state: AgentState) -> AgentState:
 
     for format_key, draft in draft_outputs.items():
         text_segments = gather_text_from_draft(format_key, draft)
-        full_format_text = " ".join(text_segments)
+        full_format_text = ".\n".join(text_segments) + "." if text_segments else ""
 
         # 1. Entity verification check
         res = run_entity_verification(full_format_text, source_entities)

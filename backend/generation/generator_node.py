@@ -133,7 +133,7 @@ def synthesize_heuristic_draft(
             title=f"Critical Security Advisory: Threat Remediation for {source_name}",
             severity_level="HIGH",
             threat_overview=primary_text[:400] if len(primary_text) > 50 else "An unauthorized operational disruption was detected and mitigated across monitored systems.",
-            affected_systems=["Substation control software", "Tactical endpoints", "Enterprise SCADA relays"],
+            affected_systems=["Substation control software", "Grid facility endpoints"],
             indicators_of_compromise=[
                 "Unpatched firmware vulnerability (CVE pending)",
                 "Anomalous scheduled task execution in System32",

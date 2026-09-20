@@ -11,12 +11,12 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 
 from backend.orchestration.state import AgentState, get_empty_agent_state
+from backend.ingestion.normalizer import run_ingestion_and_normalization
+from backend.generation.generator_node import run_parallel_format_generation
+from backend.verification.reflection import run_reflection_repair
+from backend.verification.gate_node import run_entity_and_claim_verification
 from backend.orchestration.node_stubs import (
-    run_ingestion_and_normalization,
     run_context_and_entity_extraction,
-    run_parallel_format_generation,
-    run_reflection_repair,
-    run_entity_and_claim_verification,
     run_deterministic_exporters,
 )
 
