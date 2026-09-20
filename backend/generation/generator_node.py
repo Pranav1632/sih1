@@ -41,6 +41,116 @@ SCHEMA_MAP: Dict[str, Type[BaseModel]] = {
     "infographic": InfographicSchema,
 }
 
+# Concrete filled examples (NOT schema definitions) — used as output format hint.
+# Small model needs to see actual values, NOT json-schema meta-objects.
+SCHEMA_EXAMPLES: Dict[str, Any] = {
+    "exec_summary": {
+        "situation_overview": "A one-paragraph strategic briefing summarizing the key situation for senior leadership.",
+        "core_findings": ["Finding one extracted from the document.", "Finding two.", "Finding three."],
+        "strategic_impact": "Description of the financial, operational, or security risk.",
+        "decisions_required": ["Decision the executive must make now.", "Second required decision."],
+        "confidence_assessment": "HIGH",
+        "cited_chunk_ids": ["doc_01_chunk_01"],
+    },
+    "advisory": {
+        "advisory_id": "NTRO-ADV-2026-09",
+        "title": "Formal advisory threat title from the document",
+        "severity_level": "HIGH",
+        "threat_overview": "Detailed description of the threat mechanism and attribution extracted from the document.",
+        "affected_systems": ["System or protocol mentioned in doc", "Another affected system"],
+        "indicators_of_compromise": ["Specific IOC from document", "Another indicator"],
+        "recommended_mitigations": ["Immediate mitigation step one", "Step two"],
+        "compliance_and_governance": "Regulatory and reporting requirements relevant to this advisory.",
+        "cited_chunk_ids": ["doc_01_chunk_01"],
+    },
+    "presentation": {
+        "deck_title": "Presentation title based on the document",
+        "target_audience": "Senior leadership / technical audience",
+        "slides": [
+            {
+                "slide_number": 1,
+                "title": "Executive Overview",
+                "bullet_points": ["Key point one", "Key point two", "Key point three"],
+                "visual_guidance": "Full-width text with header graphic",
+                "speaker_notes": "Detailed speaker script for slide 1.",
+                "slide_reference_citations": ["doc_01_chunk_01"],
+            },
+            {
+                "slide_number": 2,
+                "title": "Core Findings",
+                "bullet_points": ["Finding one", "Finding two", "Finding three"],
+                "visual_guidance": "2-column layout with bullet list",
+                "speaker_notes": "Detailed speaker script for slide 2.",
+                "slide_reference_citations": ["doc_01_chunk_02"],
+            },
+            {
+                "slide_number": 3,
+                "title": "Strategic Recommendations",
+                "bullet_points": ["Recommendation one", "Recommendation two"],
+                "visual_guidance": "Single column with action callout box",
+                "speaker_notes": "Speaker notes for the recommendations slide.",
+                "slide_reference_citations": ["doc_01_chunk_03"],
+            },
+        ],
+    },
+    "linkedin": {
+        "headline": "A punchy professional headline from the document insights",
+        "opening_hook": "First compelling line. Second line that stops the scroll.",
+        "body_paragraphs": [
+            "First body paragraph with core insight from the document.",
+            "Second paragraph expanding on implications.",
+            "Third paragraph with supporting evidence.",
+        ],
+        "key_takeaways": ["Takeaway one", "Takeaway two", "Takeaway three"],
+        "call_to_action": "Professional engagement prompt or advisory question.",
+        "hashtags": ["#Intelligence", "#Strategy", "#Innovation"],
+        "cited_chunk_ids": ["doc_01_chunk_01"],
+    },
+    "infographic": {
+        "infographic_title": "Infographic title from the document topic",
+        "central_theme": "The core theme being visualized",
+        "sections": [
+            {
+                "section_order": 1,
+                "header": "Section header one",
+                "key_statistic_or_callout": "A key statistic or fact",
+                "descriptive_copy": "Brief descriptive text for this section.",
+                "recommended_chart_type": "Bar Chart",
+            },
+            {
+                "section_order": 2,
+                "header": "Section header two",
+                "key_statistic_or_callout": "Another key callout",
+                "descriptive_copy": "Descriptive text for section two.",
+                "recommended_chart_type": "Flowchart",
+            },
+        ],
+        "cited_chunk_ids": ["doc_01_chunk_01"],
+    },
+    "twitter": {
+        "thread_hook": "Compelling first tweet that grabs attention.",
+        "tweets": [
+            {"tweet_number": 1, "content": "Tweet one content from document.", "hashtags": ["#Intel"]},
+            {"tweet_number": 2, "content": "Tweet two expanding on finding.", "hashtags": []},
+        ],
+        "cited_chunk_ids": ["doc_01_chunk_01"],
+    },
+    "video": {
+        "video_title": "Video title from document topic",
+        "target_duration_minutes": 5,
+        "scenes": [
+            {
+                "scene_number": 1,
+                "scene_title": "Opening",
+                "narration_script": "Narration for the opening scene.",
+                "visual_direction": "Title card with background.",
+                "duration_seconds": 30,
+            }
+        ],
+        "cited_chunk_ids": ["doc_01_chunk_01"],
+    },
+}
+
 
 def normalize_format_key(key: str) -> str:
     """Normalizes format keys from UI or API to standard internal schema keys."""
@@ -273,19 +383,89 @@ def synthesize_heuristic_draft(
     )
 
 
+import re as _re
+import json as _json
+import threading
+
+# Per-format num_predict caps — tuned for local CPU qwen2.5:3b
+# Lower = faster; these are sized for the actual output needed
+FORMAT_TOKEN_LIMITS = {
+    "exec_summary": 900,
+    "linkedin": 800,
+    "infographic": 900,
+    "advisory": 1400,
+    "presentation": 2048,
+    "twitter": 600,
+    "video": 1200,
+}
+
+
+def _repair_json(raw: str) -> str:
+    """
+    Attempts to extract and repair a JSON object from raw model output.
+    Handles: markdown code fences, partial truncation, trailing garbage.
+    """
+    # Strip markdown fences
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = _re.sub(r"^```[a-z]*\n?", "", raw)
+        raw = _re.sub(r"```$", "", raw).strip()
+
+    # Find first complete {...} block
+    start = raw.find("{")
+    if start == -1:
+        return raw
+    raw = raw[start:]
+
+    # Balance braces to find the closing }
+    depth = 0
+    end = -1
+    in_string = False
+    escape_next = False
+    for i, ch in enumerate(raw):
+        if escape_next:
+            escape_next = False
+            continue
+        if ch == "\\" and in_string:
+            escape_next = True
+            continue
+        if ch == '"':
+            in_string = not in_string
+        if not in_string:
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+
+    if end != -1:
+        return raw[:end + 1]
+    # Truncated — try to close open braces
+    missing = depth
+    return raw + "}" * missing
+
+
 def generate_single_format(
     format_key: str,
     chunks: List[Dict[str, Any]],
     parameters: Dict[str, Any],
     context_summary: str = "",
+    job_id: str = "",
 ) -> Dict[str, Any]:
     """
-    Generates a single deliverable format using local ChatOllama if available,
-    falling back to deterministic grounded heuristic synthesis.
+    Generates a single deliverable format using local Ollama with streaming.
+    - Uses per-format token limits to keep each format under ~45s on CPU
+    - Streams tokens live to the SSE buffer
+    - Repairs malformed JSON before Pydantic validation
+    - Falls back to heuristic synthesis only on complete failure
     """
+    from backend import streaming as _st
+
     norm_key = normalize_format_key(format_key)
     schema_cls = SCHEMA_MAP.get(norm_key, AdvisorySchema)
-    
+
     prompt_bundle = build_prompt_for_format(
         format_key=norm_key,
         chunks=chunks,
@@ -293,51 +473,92 @@ def generate_single_format(
         context_summary=context_summary,
     )
 
-    # Attempt ChatOllama structured output with mandatory local LLM
     model_name = settings.OLLAMA_MODEL_DEV
+    num_predict = FORMAT_TOKEN_LIMITS.get(norm_key, 1200)
 
     try:
-        from langchain_ollama import ChatOllama
-        from langchain_core.messages import SystemMessage, HumanMessage
+        import ollama as _ollama
 
-        logger.info(f"[LLM_SYNTHESIZER] Requesting structured output for '{norm_key}' via local Ollama ({model_name})...")
-        llm = ChatOllama(
-            base_url=settings.OLLAMA_HOST,
-            model=model_name,
-            temperature=0.1,
-            timeout=65.0,
+        logger.info(f"[LLM_SYNTHESIZER] Streaming '{norm_key}' via Ollama ({model_name}, max_tokens={num_predict})...")
+
+        if job_id:
+            _st.push_event(job_id, "format_start", format=norm_key, model=model_name)
+
+        example = SCHEMA_EXAMPLES.get(norm_key, SCHEMA_EXAMPLES.get("exec_summary", {}))
+        example_json = _json.dumps(example, indent=2)
+        user_with_schema = (
+            prompt_bundle["user"]
+            + f"\n\nRespond ONLY with a JSON object matching this exact structure "
+              f"(use real content from the document above, NOT these placeholder strings):\n{example_json}"
         )
-        structured_llm = llm.with_structured_output(schema_cls)
-        messages = [
-            SystemMessage(content=prompt_bundle["system"]),
-            HumanMessage(content=prompt_bundle["user"]),
-        ]
-        result = structured_llm.invoke(messages)
-        default_citations = [c.get("chunk_id") for c in chunks if c.get("chunk_id")][:2]
+
+        stream = _ollama.chat(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": prompt_bundle["system"]},
+                {"role": "user", "content": user_with_schema},
+            ],
+            format="json",
+            options={
+                "temperature": 0.15,
+                "num_predict": num_predict,
+                "top_p": 0.9,
+                "repeat_penalty": 1.1,
+            },
+            stream=True,
+        )
+
+        raw_json = ""
+        for chunk in stream:
+            token = chunk["message"]["content"]
+            raw_json += token
+            if job_id and token:
+                _st.push_token(job_id, norm_key, token)
+
+        default_citations = [c.get("chunk_id") for c in chunks if c.get("chunk_id")][:3]
         if not default_citations:
             default_citations = ["doc_01_chunk_01"]
 
-        out = None
-        if isinstance(result, BaseModel):
-            out = result.model_dump()
-        elif isinstance(result, dict):
-            out = schema_cls.model_validate(result).model_dump()
+        # Step 1: Repair JSON (handle fences, truncation, brace imbalance)
+        repaired = _repair_json(raw_json)
 
-        if out is not None:
-            if "cited_chunk_ids" in out and not out["cited_chunk_ids"]:
-                out["cited_chunk_ids"] = default_citations
-            if "slides" in out and isinstance(out["slides"], list):
-                for s in out["slides"]:
-                    if isinstance(s, dict) and not s.get("slide_reference_citations"):
-                        s["slide_reference_citations"] = default_citations[:1]
-            logger.info(f"[LLM_SYNTHESIZER] Successfully generated structured output for '{norm_key}' using {model_name}.")
-            return out
+        # Step 2: Pydantic validation — strict then lenient
+        try:
+            out = schema_cls.model_validate_json(repaired).model_dump()
+        except Exception as val_err:
+            logger.warning(f"[LLM_SYNTHESIZER] Strict validation failed for '{norm_key}': {val_err}")
+            try:
+                parsed = _json.loads(repaired)
+                out = schema_cls.model_validate(parsed).model_dump()
+            except Exception as parse_err:
+                logger.warning(f"[LLM_SYNTHESIZER] Lenient parse also failed for '{norm_key}': {parse_err}")
+                raise  # fall through to heuristic
+
+        # Populate citations
+        if "cited_chunk_ids" in out and not out["cited_chunk_ids"]:
+            out["cited_chunk_ids"] = default_citations
+        if "slides" in out and isinstance(out["slides"], list):
+            for s in out["slides"]:
+                if isinstance(s, dict) and not s.get("slide_reference_citations"):
+                    s["slide_reference_citations"] = default_citations[:1]
+        if "sections" in out and isinstance(out["sections"], list):
+            for sec in out["sections"]:
+                if isinstance(sec, dict) and not sec.get("cited_chunk_ids"):
+                    pass  # InfographicSection doesn't have citations
+
+        if job_id:
+            _st.push_event(job_id, "format_done", format=norm_key, chars=len(raw_json))
+
+        logger.info(f"[LLM_SYNTHESIZER] ✅ '{norm_key}' done — {len(raw_json)} chars.")
+        return out
+
     except Exception as e:
-        logger.warning(f"[LLM_SYNTHESIZER] Local model {model_name} invocation failed for '{norm_key}': {e}")
+        logger.warning(f"[LLM_SYNTHESIZER] Ollama failed for '{norm_key}': {e}")
+        if job_id:
+            _st.push_event(job_id, "format_error", format=norm_key, error=str(e)[:200])
 
-    logger.warning(f"[LLM_SYNTHESIZER] All local Ollama attempts completed. Using deterministic grounded document synthesis for '{norm_key}'.")
-
-    # Grounded fallback
+    # Heuristic fallback — always grounded in real source chunks
+    logger.warning(f"[LLM_SYNTHESIZER] Using heuristic fallback for '{norm_key}'.")
     fallback_model = synthesize_heuristic_draft(
         format_key=norm_key,
         chunks=chunks,
@@ -348,6 +569,8 @@ def generate_single_format(
     default_citations = [c.get("chunk_id") for c in chunks if c.get("chunk_id")][:2] or ["doc_01_chunk_01"]
     if "cited_chunk_ids" in fallback_dict and not fallback_dict["cited_chunk_ids"]:
         fallback_dict["cited_chunk_ids"] = default_citations
+    if job_id:
+        _st.push_event(job_id, "format_done", format=norm_key, chars=0, fallback=True)
     return fallback_dict
 
 
@@ -357,18 +580,22 @@ def run_parallel_format_generation(state: AgentState) -> AgentState:
     Dispatches generation for all requested formats and populates state['draft_outputs'].
     Matches Orchestration Lead's stub contract.
     """
+    from backend import streaming as _st
+
     requested_formats = state.get("requested_formats", [])
     if not requested_formats:
-        # Default to top 3 if none explicitly requested
         requested_formats = ["advisory", "exec_summary", "presentation"]
 
     chunks = state.get("source_chunks", [])
     parameters = state.get("parameters", {})
     context_summary = state.get("context_summary", "")
+    job_id = state.get("job_id", "")
 
-    draft_outputs: Dict[str, Any] = state.get("draft_outputs", {})
-    if draft_outputs is None:
-        draft_outputs = {}
+    draft_outputs: Dict[str, Any] = state.get("draft_outputs", {}) or {}
+
+    # Initialize streaming buffer so the SSE endpoint can serve tokens live
+    if job_id:
+        _st.init_job(job_id)
 
     for fmt in requested_formats:
         norm_key = normalize_format_key(fmt)
@@ -378,13 +605,20 @@ def run_parallel_format_generation(state: AgentState) -> AgentState:
                 chunks=chunks,
                 parameters=parameters,
                 context_summary=context_summary,
+                job_id=job_id,
             )
             draft_outputs[norm_key] = draft_dict
         except Exception as e:
             logger.error(f"Error generating format {fmt}: {e}")
-            # Fallback to ensure state integrity
             fallback = synthesize_heuristic_draft(norm_key, chunks, parameters, context_summary)
             draft_outputs[norm_key] = fallback.model_dump()
+            if job_id:
+                _st.push_event(job_id, "format_error", format=norm_key, error=str(e))
+
+    # Signal pipeline generation complete
+    if job_id:
+        _st.push_event(job_id, "pipeline_done", formats=list(draft_outputs.keys()))
+        _st.mark_done(job_id)
 
     state["draft_outputs"] = draft_outputs
     return state

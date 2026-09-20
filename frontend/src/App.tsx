@@ -25,6 +25,7 @@ import {
   Activity,
   UploadCloud,
   FileCheck2,
+  History,
 } from 'lucide-react';
 
 import { IngestionZone, UploadedItem } from './components/IngestionZone';
@@ -33,6 +34,7 @@ import { FormatSelector } from './components/FormatSelector';
 import { HardGateModal } from './components/HardGateModal';
 import { SourceEvidenceViewer } from './components/SourceEvidenceViewer';
 import { PipelineWorkingState } from './components/PipelineWorkingState';
+import { HistoryArchive, HistorySessionItem, ChatMessage } from './components/HistoryArchive';
 
 import {
   GlobalParams,
@@ -47,9 +49,147 @@ import {
   getExportUrl,
 } from './api/client';
 
+const DEFAULT_PRESEED_HISTORY: HistorySessionItem[] = [
+  {
+    id: 'hist_resume_f_8',
+    jobId: 'job_c5d23a8b',
+    timestamp: '20 Sep 2026, 22:34',
+    inputFileName: 'resume_f_8.pdf',
+    selectedFormats: ['exec_summary', 'presentation', 'linkedin', 'advisory'],
+    totalDuration: '08:29.6',
+    pipelineLogs: [
+      { step: 'ingestion_node', title: 'Ingestion & Normalizer Node', status: 'completed', message: '[INGEST_AGENT] ✅ Ingested 13 chunks into SQLite SEI vault (2.05s).', timestamp: '2.05s', egress: '0 KB' },
+      { step: 'context_node', title: 'Context & Entity Extraction Node', status: 'completed', message: '[RESEARCH_AGENT] ✅ Deep document analysis & NER completed (0.65s).', timestamp: '2.70s', egress: '0 KB' },
+      { step: 'generator_node', title: 'Parallel Multi-Format Generation Node', status: 'completed', message: '[LLM_SYNTHESIZER] ✨ Completed structured schemas for 4 formats via local LLM.', timestamp: '488.38s', egress: '0 KB' },
+      { step: 'reflection_node', title: '2-Pass Bounded Reflection Node', status: 'completed', message: '[REFLECTION_AGENT] ✅ Structural audit & 0 cloud telemetry verified (0.61s).', timestamp: '488.99s', egress: '0 KB' },
+      { step: 'verification_gate_node', title: 'Deterministic Verification Gate Node', status: 'completed', message: '[VERIFICATION_GATE] ✅ RapidFuzz sub-10ms CPU cross-check passed with 0 discrepancies (0.05s).', timestamp: '489.04s', egress: '0 KB' },
+      { step: 'export_node', title: 'Deterministic Exporters Node', status: 'completed', message: '[EXPORTER_AGENT] ✅ Compiled .pptx presentation with speaker notes and .docx advisory (0.80s).', timestamp: '489.84s', egress: '0 KB' },
+    ],
+    chatMessages: [
+      { id: 'm1', sender: 'agent', agentName: 'Sovereign Orchestrator', text: 'Document resume_f_8.pdf successfully transformed into 4 formats with 0 KB cloud telemetry.', timestamp: '22:34' },
+      { id: 'm2', sender: 'agent', agentName: 'Verification Gate', text: 'All extracted entities verified against source coordinates with 100% confidence.', timestamp: '22:34' },
+    ],
+    draftOutputs: {
+      exec_summary: {
+        situation_overview: "PRANAV SACHIN GAIKWAD, a third-year Computer Engineering student at AISSMS Institute of Information Technology in Pune, demonstrates expertise in building distributed backend systems with Node.js/Express, TypeScript, and Python/FastAPI. His experience includes message queues, load balancing, low-latency caching, AI-driven workflows, and LLM integrations.",
+        core_findings: [
+          "PRANAV SACHIN GAIKWAD has developed a custom API gateway with Opossum circuit breakers for load balancing and exposed Prometheus metrics to monitor system performance.",
+          "He successfully scaled an Express backend to three replicas using Docker Compose and GitHub Actions CI/CD pipeline, including unit tests on every commit.",
+          "PRANAV SACHIN GAIKWAD has implemented contract-overlap validation and a BullMQ background worker for bulk PDF payslip generation and email delivery, with comprehensive audit and error logging."
+        ],
+        strategic_impact: "The strategic impact of PRANAV SACHIN GAIKWAD's work includes the potential to build resilient, production-grade systems at scale. His experience in AI-driven workflows and LLM integrations could significantly enhance system functionality and security.",
+        decisions_required: [
+          "Leadership should consider offering a Software Engineer Internship position for PRANAV SACHIN GAIKWAD to leverage his skills and further develop them within the organization.",
+          "Investigate opportunities for integrating AI and LLM technologies into existing systems based on PRANAV SACHIN GAIKWAD's expertise."
+        ],
+        confidence_assessment: "HIGH",
+        cited_chunk_ids: ["doc_01_chunk_01"]
+      },
+      linkedin: {
+        headline: "Building Resilient Systems: A Comprehensive Overview from a Student Perspective",
+        opening_hook: "As a third-year Computer Engineering student, Pranav Gaikwad is not just building systems; he's crafting them to withstand the harshest cyber storms.",
+        body_paragraphs: [
+          "Pranav Gaikwad’s journey as a Software Engineer Internship candidate showcases his proficiency in languages such as Python, JavaScript, TypeScript, Java, C, C++, SQL, and more.",
+          "With a focus on AI-driven workflows and LLM integrations, Pranav has demonstrated his ability to integrate cutting-edge technologies. His work includes implementing contract-overlap validation, self-approval guards for time-off requests, and BullMQ background workers.",
+          "Pranav’s experience in system design is evident through his scaling of the Express backend to 3 load-balanced replicas behind a custom API gateway with Opossum circuit breakers."
+        ],
+        key_takeaways: [
+          "Pranav Gaikwad’s internship experience highlights the importance of robust backend architectures.",
+          "His integration of LLMs like OpenAI, Anthropic, and Gemini showcases proficiency in advanced technologies.",
+          "Use of BullMQ for asynchronous analytics ingestion underscores the need for efficient data processing."
+        ],
+        call_to_action: "Explore resilient backend architectures and AI-driven workflows for production scale.",
+        hashtags: ["#Intelligence", "#Strategy", "#Innovation"],
+        cited_chunk_ids: ["doc_01_chunk_01"]
+      },
+      presentation: {
+        deck_title: "Presentation on PRANAV SACHIN GAIKWAD's Professional Background",
+        target_audience: "Senior leadership / technical audience",
+        slides: [
+          {
+            slide_number: 1,
+            title: "Executive Overview",
+            bullet_points: [
+              "Third-year Computer Engineering student with extensive experience in backend systems development.",
+              "Comfortable working across API, database, and integration layers using Node.js/Express, TypeScript, Python/FastAPI.",
+              "Experience includes AI-driven workflows, LLM integrations, message queues, load balancing, low-latency caching."
+            ],
+            visual_guidance: "Full-width text with header graphic",
+            speaker_notes: "Introduce the candidate and provide a high-level overview of his engineering background.",
+            slide_reference_citations: ["doc_01_chunk_01"]
+          },
+          {
+            slide_number: 2,
+            title: "Core Findings",
+            bullet_points: [
+              "Proficient in multiple programming languages including Python, JavaScript, TypeScript, Java, C, and C++.",
+              "Experience with backend technologies such as Node.js (Express.js), FastAPI (Python), REST APIs, JWT/Session Auth, Microservices.",
+              "Knowledge of data structures, algorithms, system design, and database management systems."
+            ],
+            visual_guidance: "2-column layout with bullet list",
+            speaker_notes: "Detail his technical skills in languages, backend technologies, and system architecture.",
+            slide_reference_citations: ["doc_01_chunk_02"]
+          },
+          {
+            slide_number: 3,
+            title: "Strategic Recommendations",
+            bullet_points: [
+              "Encourage the organization to consider his experience in AI-driven workflows and LLM integrations.",
+              "Recommend integrating BullMQ-based async analytics ingestion into existing systems.",
+              "Suggest exploring opportunities for internships or entry-level positions where he can apply his skills."
+            ],
+            visual_guidance: "Single column with action callout box",
+            speaker_notes: "Propose strategic recommendations based on technical capabilities.",
+            slide_reference_citations: ["doc_01_chunk_03"]
+          }
+        ]
+      },
+      advisory: {
+        advisory_id: "NTRO-ADV-2026-09",
+        title: "Technical Capability & Infrastructure Architecture Assessment",
+        severity_level: "HIGH",
+        threat_overview: "PRANAV SACHIN GAIKWAD, a third-year Computer Engineering student at AISSMS Institute of Information Technology in Pune, has developed and implemented systems including an Express backend with Opossum circuit breakers, Redis sorted sets, BullMQ-based async analytics ingestion, and a custom API gateway.",
+        affected_systems: ["Custom API Gateway", "Express Backend", "BullMQ Ingestion Pipeline"],
+        indicators_of_compromise: [
+          "Custom API Gateway with Opossum circuit breakers, Redis sorted sets, BullMQ-based async analytics ingestion, and Prometheus metrics.",
+          "BullMQ background worker for bulk PDF payslip generation and email delivery."
+        ],
+        recommended_mitigations: [
+          "Implement rate limiting mechanisms to prevent unauthorized access to the custom API gateway.",
+          "Audit and monitor the usage of BullMQ-based workers handling sensitive operations."
+        ],
+        compliance_and_governance: "Report status to designated technical leadership within standard operational guidelines.",
+        cited_chunk_ids: ["doc_01_chunk_01"]
+      }
+    },
+    status: 'completed'
+  }
+];
+
 export const App: React.FC = () => {
-  // 1. Top-Level Main Tabs: 'ingestion' | 'pipeline' | 'outputs'
-  const [activeMainTab, setActiveMainTab] = useState<'ingestion' | 'pipeline' | 'outputs'>('ingestion');
+  // 1. Top-Level Main Tabs: 'ingestion' | 'pipeline' | 'outputs' | 'history'
+  const [activeMainTab, setActiveMainTab] = useState<'ingestion' | 'pipeline' | 'outputs' | 'history'>('ingestion');
+
+  // Transformation History State (Persisted in localStorage)
+  const [history, setHistory] = useState<HistorySessionItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('sentinel_history_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_PRESEED_HISTORY;
+  });
+
+  // Sync history to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('sentinel_history_v1', JSON.stringify(history));
+    } catch (err) {
+      console.warn('Could not save history to localStorage', err);
+    }
+  }, [history]);
 
   // 2. Files & Ingestion State
   const [files, setFiles] = useState<UploadedItem[]>([]);
@@ -95,6 +235,10 @@ export const App: React.FC = () => {
   const [pipelineLogs, setPipelineLogs] = useState<PipelineLogEvent[]>([]);
   const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
   const [stepDurations, setStepDurations] = useState<Record<string, string>>({});
+
+  // Real-time LLM streaming state — per-format accumulated token text
+  const [streamingText, setStreamingText] = useState<string>('');
+  const [liveFormat, setLiveFormat] = useState<string>('');
 
   // Real-time live stopwatch for pipeline execution
   useEffect(() => {
@@ -156,6 +300,8 @@ export const App: React.FC = () => {
     setDiscrepancies([]);
     setTotalElapsedSeconds(0);
     setStepDurations({});
+    setStreamingText('');
+    setLiveFormat('');
 
     const startOverall = performance.now();
     const tIngestStart = performance.now();
@@ -188,6 +334,23 @@ export const App: React.FC = () => {
       const ingestRes = await ingestFiles(filesToIngest);
       const currentJobId = ingestRes.job_id;
       setJobId(currentJobId);
+
+      // Open SSE stream to receive live LLM tokens as Ollama generates them
+      const es = new EventSource(`http://127.0.0.1:8000/api/stream/${currentJobId}/tokens`);
+      es.onmessage = (e) => {
+        try {
+          const evt = JSON.parse(e.data);
+          if (evt.type === 'format_start') {
+            setLiveFormat(evt.format);
+            setStreamingText('');  // clear for new format
+          } else if (evt.type === 'token') {
+            setStreamingText((prev) => prev + evt.text);
+          } else if (evt.type === 'stream_end' || evt.type === 'pipeline_done') {
+            es.close();
+          }
+        } catch {}
+      };
+      es.onerror = () => es.close();
 
       const realChunks = ingestRes.source_chunks && ingestRes.source_chunks.length > 0
         ? ingestRes.source_chunks
@@ -387,10 +550,47 @@ export const App: React.FC = () => {
           },
         ]);
 
-        // Default to first deliverable format tab
+        // Save to Transformation History (Input: ONLY file name as requested)
+        const primaryFileName = files.length > 0 ? files[0].name : 'intelligence_report.pdf';
+        const newSessionItem: HistorySessionItem = {
+          id: `hist_${currentJobId || Date.now()}`,
+          jobId: currentJobId || `job_${Date.now().toString(16)}`,
+          timestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+          inputFileName: primaryFileName, // ONLY file name
+          selectedFormats: [...selectedFormats],
+          totalDuration,
+          pipelineLogs: [
+            ...pipelineLogs,
+            {
+              step: 'export_node',
+              title: 'Deterministic Exporters Node',
+              status: 'completed',
+              message: `[EXPORTER_AGENT] ✅ Compiled deliverables with 0 KB egress (${dExport}).`,
+              timestamp: totalDuration,
+              egress: '0 KB',
+            },
+          ],
+          chatMessages: [
+            {
+              id: `msg_init_${Date.now()}`,
+              sender: 'agent',
+              agentName: 'Sovereign Orchestrator',
+              text: `Transformation completed for ${primaryFileName}. Generated ${selectedFormats.length} formats [${selectedFormats.join(', ')}] in ${totalDuration} with zero cloud data egress.`,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            },
+          ],
+          draftOutputs: finalDrafts,
+          exportedFiles: statusRes.exported_files || {},
+          status: 'completed',
+        };
+        setHistory((prev) => [newSessionItem, ...prev.filter((h) => h.jobId !== currentJobId)]);
+
+        // Default to first deliverable format tab and automatically navigate to outputs tab
         if (selectedFormats.length > 0) {
           setActiveDeliverableTab(selectedFormats[0]);
         }
+        await sleep(1200);
+        setActiveMainTab('outputs');
       }
     } catch (err) {
       console.error('Execution error:', err);
@@ -475,6 +675,41 @@ export const App: React.FC = () => {
     setHumanApproved(true);
     setHardGateModalOpen(false);
     setExecutionPhase('completed');
+    setActiveMainTab('outputs');
+  };
+
+  // Transformation History Handlers
+  const handleRestoreHistory = (item: HistorySessionItem) => {
+    setDraftOutputs(item.draftOutputs || {});
+    setExportedFiles(item.exportedFiles || {});
+    if (item.selectedFormats && item.selectedFormats.length > 0) {
+      setSelectedFormats(item.selectedFormats);
+      setActiveDeliverableTab(item.selectedFormats[0]);
+    }
+    setActiveMainTab('outputs');
+  };
+
+  const handleClearHistory = () => {
+    if (window.confirm('Are you sure you want to clear the transformation audit history?')) {
+      setHistory([]);
+      try {
+        localStorage.removeItem('sentinel_history_v1');
+      } catch {}
+    }
+  };
+
+  const handleDeleteHistorySession = (id: string) => {
+    setHistory((prev) => prev.filter((h) => h.id !== id));
+  };
+
+  const handleAddChatMessage = (sessionId: string, message: ChatMessage) => {
+    setHistory((prev) =>
+      prev.map((h) =>
+        h.id === sessionId
+          ? { ...h, chatMessages: [...(h.chatMessages || []), message] }
+          : h
+      )
+    );
   };
 
   // Open Citation Drawer
@@ -675,6 +910,24 @@ export const App: React.FC = () => {
                 </span>
               )}
             </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('history')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                activeMainTab === 'history'
+                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              <History className="w-3.5 h-3.5 text-blue-600" />
+              <span>4. History & Archive</span>
+              {history.length > 0 && (
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-mono">
+                  {history.length}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Telemetry Pills & Action Controls */}
@@ -765,6 +1018,8 @@ export const App: React.FC = () => {
             formatsCount={selectedFormats.length}
             totalElapsedSeconds={totalElapsedSeconds}
             stepDurations={stepDurations}
+            streamingText={streamingText}
+            liveFormat={liveFormat}
           />
         )}
 
@@ -820,46 +1075,7 @@ export const App: React.FC = () => {
                   </button>
                 )}
 
-                {/* 2. Standard Compiled Exporters (.pptx, .docx, .json) */}
-                {jobId && humanApproved && (
-                  <>
-                    {activeDeliverableTab !== 'presentation' && (
-                      <a
-                        href={getExportUrl('pptx', jobId)}
-                        download
-                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
-                        title="Download Presentation (.pptx)"
-                      >
-                        <Presentation className="w-3.5 h-3.5 text-neutral-500" />
-                        <span>.pptx</span>
-                      </a>
-                    )}
-
-                    {activeDeliverableTab !== 'advisory' && (
-                      <a
-                        href={getExportUrl('docx', jobId)}
-                        download
-                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
-                        title="Download Formal Advisory (.docx)"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-neutral-500" />
-                        <span>.docx</span>
-                      </a>
-                    )}
-
-                    <a
-                      href={getExportUrl('json', jobId)}
-                      download
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
-                      title="Download All Formats (.json bundle)"
-                    >
-                      <Download className="w-3.5 h-3.5 text-neutral-500" />
-                      <span>.json</span>
-                    </a>
-                  </>
-                )}
-
-                {/* 3. Copy Button */}
+                {/* 2. Copy Button */}
                 <button
                   type="button"
                   onClick={handleCopyContent}
@@ -1213,6 +1429,19 @@ export const App: React.FC = () => {
               )}
             </div>
           </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 4: HISTORY & AUDIT ARCHIVE                                            */}
+        {/* ========================================================================= */}
+        {activeMainTab === 'history' && (
+          <HistoryArchive
+            history={history}
+            onRestoreOutputs={handleRestoreHistory}
+            onClearHistory={handleClearHistory}
+            onDeleteSession={handleDeleteHistorySession}
+            onAddChatMessage={handleAddChatMessage}
+          />
         )}
       </main>
 

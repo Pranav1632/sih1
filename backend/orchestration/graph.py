@@ -93,7 +93,6 @@ workflow = build_workflow()
 memory = MemorySaver()
 app = workflow.compile(
     checkpointer=memory,
-    interrupt_before=["export_node"],
 )
 
 

@@ -13,6 +13,7 @@ import {
   Activity,
   Check,
   Clock,
+  Zap,
 } from 'lucide-react';
 import { PipelineLogEvent, EntityDiscrepancy } from '../api/client';
 
@@ -35,6 +36,8 @@ export interface PipelineWorkingStateProps {
   formatsCount: number;
   totalElapsedSeconds?: number;
   stepDurations?: Record<string, string>;
+  streamingText?: string;
+  liveFormat?: string;
 }
 
 export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
@@ -47,8 +50,11 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
   formatsCount,
   totalElapsedSeconds = 0,
   stepDurations = {},
+  streamingText = '',
+  liveFormat = '',
 }) => {
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  const streamEndRef = useRef<HTMLDivElement>(null);
 
   const formatSeconds = (sec: number) => {
     const m = Math.floor(sec / 60);
@@ -60,6 +66,11 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs, executionPhase]);
+
+  // Auto-scroll the streaming panel as tokens arrive
+  useEffect(() => {
+    streamEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [streamingText]);
 
   const nodes = [
     {
@@ -238,6 +249,48 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
           })}
         </div>
       </div>
+
+      {/* ── Live LLM Token Stream ── */}
+      {(executionPhase === 'generating' || streamingText.length > 0) && (
+        <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-xs">
+          <div className="bg-[#0f1117] px-4 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-white text-xs font-mono">
+              <Zap className="w-3.5 h-3.5 text-yellow-400" />
+              <span className="text-neutral-200">LLM Token Stream</span>
+              {liveFormat && (
+                <span className="px-2 py-0.5 bg-yellow-400/10 border border-yellow-400/30 text-yellow-300 text-[10px] rounded font-semibold uppercase tracking-wider">
+                  {liveFormat}
+                </span>
+              )}
+              {executionPhase === 'generating' && (
+                <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                  LIVE
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-mono text-neutral-500">
+              {streamingText.length.toLocaleString()} chars
+            </span>
+          </div>
+
+          <div className="bg-[#0c0d0e] p-4 font-mono text-[11px] text-emerald-300 min-h-[140px] max-h-[280px] overflow-y-auto leading-relaxed whitespace-pre-wrap break-all">
+            {streamingText.length === 0 ? (
+              <span className="text-neutral-600">
+                Waiting for model to start generating...
+              </span>
+            ) : (
+              <>
+                {streamingText}
+                {executionPhase === 'generating' && (
+                  <span className="inline-block w-2 h-3.5 bg-emerald-400 ml-0.5 animate-pulse align-text-bottom" />
+                )}
+              </>
+            )}
+            <div ref={streamEndRef} />
+          </div>
+        </div>
+      )}
 
       {/* Live Streaming Terminal Console */}
       <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-xs">

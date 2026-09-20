@@ -75,21 +75,28 @@ REQUIREMENTS:
 }
 
 
-def format_source_chunks_context(chunks: List[Dict[str, Any]], max_chunks: int = 12) -> str:
+def format_source_chunks_context(chunks: List[Dict[str, Any]], max_chunks: int = 8) -> str:
     """
     Formats source chunks into structured text for LLM prompting.
-    When a document has many chunks (e.g. 118 chunks across 20 pages),
-    samples uniformly across all pages to provide deep, comprehensive end-to-end document research.
-    Calibrated for rich technical depth within a ~2 to 3 minute local CPU execution window.
+    Uses head + tail + middle sampling to give a full document overview.
+    Calibrated for quality within a 2-4 min local CPU window.
     """
     if not chunks:
         return "No source evidence chunks provided."
 
-    selected_chunks = chunks
-    if len(chunks) > max_chunks:
-        step = len(chunks) / max_chunks
-        indices = [int(i * step) for i in range(max_chunks)]
-        selected_chunks = [chunks[i] for i in indices]
+    if len(chunks) <= max_chunks:
+        selected_chunks = chunks
+    else:
+        # Head: first 2, Tail: last 2, Middle: evenly spread from remaining
+        n_mid = max_chunks - 4
+        head = chunks[:2]
+        tail = chunks[-2:]
+        middle_pool = chunks[2:-2]
+        step = max(1, len(middle_pool) // n_mid)
+        middle = [middle_pool[i * step] for i in range(n_mid) if i * step < len(middle_pool)]
+        seen_ids = {c.get("chunk_id") for c in head + tail}
+        middle = [c for c in middle if c.get("chunk_id") not in seen_ids]
+        selected_chunks = head + middle[:n_mid] + tail
 
     formatted = []
     for chunk in selected_chunks:
@@ -98,32 +105,26 @@ def format_source_chunks_context(chunks: List[Dict[str, Any]], max_chunks: int =
         page = chunk.get("page_number", "N/A")
         text = chunk.get("text", "").strip()
         role = chunk.get("source_role", "PRIMARY")
-        formatted.append(f"[{chunk_id}] (Source: {source_name}, Page: {page}, Role: {role}):\n{text}")
+        formatted.append(f"[{chunk_id}] (Page {page}, {role}):\n{text}")
 
-    return "\n\n".join(formatted)
+    return "\n\n---\n\n".join(formatted)
 
 
 def format_parameters_context(parameters: Dict[str, Any]) -> str:
     """Formats operator-selected dashboard parameters into prompt instructions."""
     if not parameters:
-        return "Default settings: Authoritative tone, Executive audience, High detail."
+        return "Tone: Authoritative | Audience: Executive | Detail: High"
 
     lines = []
     if "tone" in parameters:
-        lines.append(f"- Tone: {parameters['tone']}")
+        lines.append(f"Tone: {parameters['tone']}")
     if "target_audience" in parameters or "audience" in parameters:
         aud = parameters.get("target_audience") or parameters.get("audience")
-        lines.append(f"- Target Audience: {aud}")
+        lines.append(f"Audience: {aud}")
     if "detail_level" in parameters:
-        lines.append(f"- Detail Level: {parameters['detail_level']}")
-    if "communication_objective" in parameters or "objective" in parameters:
-        obj = parameters.get("communication_objective") or parameters.get("objective")
-        lines.append(f"- Communication Objective: {obj}")
-    if "content_style" in parameters or "style" in parameters:
-        st = parameters.get("content_style") or parameters.get("style")
-        lines.append(f"- Content Style: {st}")
+        lines.append(f"Detail: {parameters['detail_level']}")
 
-    return "\n".join(lines) if lines else "Default operational settings."
+    return " | ".join(lines) if lines else "Tone: Authoritative | Audience: Executive"
 
 
 def build_prompt_for_format(
@@ -151,16 +152,13 @@ def build_prompt_for_format(
 
     evidence_block = format_source_chunks_context(chunks)
     params_block = format_parameters_context(parameters)
-    summary_block = f"\nOVERALL CONTEXT SUMMARY:\n{context_summary}\n" if context_summary else ""
 
-    user_prompt = f"""OPERATOR MISSION PARAMETERS:
-{params_block}
-{summary_block}
-AUTHORITATIVE SOURCE EVIDENCE CHUNKS (Reference these chunks and cite their chunk_ids):
+    user_prompt = f"""PARAMETERS: {params_block}
+
+SOURCE EVIDENCE (cite chunk_ids exactly as shown):
 {evidence_block}
 
-INSTRUCTION:
-Generate the requested deliverable strictly matching the required schema. Ensure every claim references valid chunk_ids from the evidence above. Never invent facts or chunk IDs.
+Generate the deliverable. Extract real facts from the source — do NOT use placeholder text.
 """
 
     return {
