@@ -162,9 +162,28 @@ def run_entity_and_claim_verification(state: AgentState) -> AgentState:
             "status": "VERIFIED" if res.get("passed", True) else "NEEDS_REVIEW",
         })
 
+    # Check if a deliberate test mismatch was requested (e.g. for Hard Gate testing)
+    params = state.get("parameters", {})
+    simulate_gate = params.get("simulate_hard_gate", False)
+    human_approved = state.get("human_approved", False)
+
+    if simulate_gate and not human_approved:
+        all_discrepancies.append({
+            "draft_entity": "Directorate of Grid Power Resilience",
+            "suggested_source_entity": "Directorate of Power Grid Resilience",
+            "similarity_score": 86.1,
+            "status": "FLAGGED_MISMATCH",
+        })
+
+    # Preserve pre-existing discrepancies if already set in state
+    if state.get("hard_gate_triggered") and not human_approved:
+        for d in state.get("entity_discrepancies", []):
+            if d not in all_discrepancies:
+                all_discrepancies.append(d)
+
     # Set state flags
     state["entity_discrepancies"] = all_discrepancies
-    state["hard_gate_triggered"] = len(all_discrepancies) > 0
+    state["hard_gate_triggered"] = (len(all_discrepancies) > 0 or state.get("hard_gate_triggered", False)) and not human_approved
     state["claim_verifications"] = claim_verifications
 
     return state

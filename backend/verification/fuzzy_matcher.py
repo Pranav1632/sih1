@@ -17,7 +17,7 @@ def get_spacy_nlp():
     global _nlp
     if _nlp is None:
         try:
-            _nlp = spacy.load("en_core_web_sm")
+            _nlp = spacy.load("en_core_web_sm", disable=["parser", "lemmatizer", "attribute_ruler"])
         except Exception:
             _nlp = spacy.blank("en")
     return _nlp

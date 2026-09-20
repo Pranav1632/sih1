@@ -10,6 +10,7 @@ Other teammates will replace these stub functions with their real implementation
 - Backend/Export Engineer: run_deterministic_exporters
 """
 
+import os
 from typing import Dict, Any
 from backend.orchestration.state import AgentState
 
@@ -73,13 +74,37 @@ def run_entity_and_claim_verification(state: AgentState) -> Dict[str, Any]:
     Owned by: Verification Engineer (verification.gate_node.run_entity_and_claim_verification).
     Runs spaCy + RapidFuzz to flag entity discrepancies and set hard_gate_triggered.
     """
-    return {
-        "claim_verifications": state.get("claim_verifications", []),
-        "entity_discrepancies": state.get("entity_discrepancies", []),
-        "hard_gate_triggered": state.get("hard_gate_triggered", False),
-        "human_approved": state.get("human_approved", False),
-        "human_corrections": state.get("human_corrections", {}),
-    }
+    params = state.get("parameters", {})
+    simulate_gate = params.get("simulate_hard_gate", False)
+    human_approved = state.get("human_approved", False)
+
+    if simulate_gate and not human_approved:
+        return {
+            "hard_gate_triggered": True,
+            "entity_discrepancies": [
+                {
+                    "draft_entity": "Directorate of Grid Power Resilience",
+                    "suggested_source_entity": "Directorate of Power Grid Resilience",
+                    "similarity_score": 86.1,
+                    "status": "FLAGGED_MISMATCH",
+                }
+            ],
+            "claim_verifications": state.get("claim_verifications", []),
+            "human_approved": False,
+            "human_corrections": state.get("human_corrections", {}),
+        }
+
+    try:
+        from backend.verification.gate_node import run_entity_and_claim_verification as real_gate
+        return real_gate(state)
+    except Exception:
+        return {
+            "claim_verifications": state.get("claim_verifications", []),
+            "entity_discrepancies": state.get("entity_discrepancies", []),
+            "hard_gate_triggered": state.get("hard_gate_triggered", False),
+            "human_approved": human_approved,
+            "human_corrections": state.get("human_corrections", {}),
+        }
 
 
 def run_deterministic_exporters(state: AgentState) -> Dict[str, Any]:
@@ -88,6 +113,29 @@ def run_deterministic_exporters(state: AgentState) -> Dict[str, Any]:
     Owned by: Backend/Export Engineer (exporters.pptx_exporter, exporters.docx_exporter).
     Exports validated schemas into real .pptx presentations and .docx advisories.
     """
+    exported_files = dict(state.get("exported_files", {}))
+    drafts = state.get("draft_outputs", {})
+    job_id = state.get("job_id", "job_default")
+
+    data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
+    os.makedirs(data_dir, exist_ok=True)
+
+    try:
+        from backend.exporters.pptx_exporter import export_pptx
+        from backend.exporters.docx_exporter import export_docx
+
+        if "presentation" in drafts:
+            pptx_path = os.path.join(data_dir, f"{job_id}_presentation.pptx")
+            export_pptx(drafts["presentation"], pptx_path)
+            exported_files["presentation"] = pptx_path
+
+        if "advisory" in drafts:
+            docx_path = os.path.join(data_dir, f"{job_id}_advisory.docx")
+            export_docx(drafts["advisory"], docx_path)
+            exported_files["advisory"] = docx_path
+    except Exception as e:
+        pass
+
     return {
-        "exported_files": state.get("exported_files", {}),
+        "exported_files": exported_files,
     }
