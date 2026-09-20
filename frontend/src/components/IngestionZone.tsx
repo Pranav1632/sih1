@@ -72,7 +72,6 @@ export const IngestionZone: React.FC<IngestionZoneProps> = ({
 
   const removeFile = (targetId: string) => {
     const remaining = files.filter(f => f.id !== targetId);
-    // If we removed the primary document and have remaining files, promote first to primary
     if (remaining.length > 0 && !remaining.some(f => f.role === 'PRIMARY')) {
       remaining[0].role = 'PRIMARY';
     }
@@ -108,10 +107,10 @@ export const IngestionZone: React.FC<IngestionZoneProps> = ({
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
-    if (ext === 'pdf' || ext === 'docx' || ext === 'txt') return <FileText className="w-5 h-5 text-cyan-400" />;
-    if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') return <ImageIcon className="w-5 h-5 text-emerald-400" />;
-    if (ext === 'mp4' || ext === 'wav' || ext === 'mp3') return <FileAudio className="w-5 h-5 text-amber-400" />;
-    return <FileText className="w-5 h-5 text-slate-400" />;
+    if (ext === 'pdf' || ext === 'docx' || ext === 'txt') return <FileText className="w-4 h-4 text-neutral-600" />;
+    if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') return <ImageIcon className="w-4 h-4 text-neutral-600" />;
+    if (ext === 'mp4' || ext === 'wav' || ext === 'mp3') return <FileAudio className="w-4 h-4 text-neutral-600" />;
+    return <FileText className="w-4 h-4 text-neutral-500" />;
   };
 
   const formatSize = (bytes: number) => {
@@ -121,44 +120,44 @@ export const IngestionZone: React.FC<IngestionZoneProps> = ({
   };
 
   return (
-    <div className="bg-[#0f172a]/80 backdrop-blur border border-slate-800 rounded-xl p-5 shadow-xl">
+    <div className="bg-white border border-neutral-200/90 rounded-xl p-5 shadow-xs transition-all">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <div className="p-2 bg-cyan-950/70 border border-cyan-500/30 rounded-lg text-cyan-400">
-            <UploadCloud className="w-5 h-5" />
+        <div className="flex items-center space-x-2.5">
+          <div className="p-2 bg-neutral-100 border border-neutral-200 rounded-lg text-neutral-900">
+            <UploadCloud className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-100 flex items-center gap-2">
-              1. Sovereign Multimodal Ingestion
-              <span className="text-xs px-2 py-0.5 rounded font-mono bg-cyan-950 text-cyan-300 border border-cyan-800">
-                0 KB Egress
+            <h2 className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
+              Source Ingestion
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-neutral-100 text-neutral-700 border border-neutral-200">
+                Air-Gapped
               </span>
             </h2>
-            <p className="text-xs text-slate-400">
-              PDF, DOCX, Tactical Scans (OCR), Audio/Video Intercepts (Whisper)
+            <p className="text-xs text-neutral-500">
+              PDF, DOCX, Images (OCR), and Audio/Video transcripts
             </p>
           </div>
         </div>
 
         <button
           onClick={loadDemoPreset}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-cyan-300 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-700/50 rounded-md transition"
-          title="Load GhostLatch incident report demo fixtures"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shadow-2xs"
+          title="Populate with sample intelligence report"
         >
-          <Sparkles className="w-3.5 h-3.5" />
-          Load Demo Preset
+          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          Load Sample Intel
         </button>
       </div>
 
-      {/* Dropzone */}
+      {/* Drag & Drop Zone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${
+        className={`relative border border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${
           isDragging
-            ? 'border-cyan-400 bg-cyan-950/30'
-            : 'border-slate-700/80 hover:border-slate-600 bg-slate-900/40'
+            ? 'border-neutral-900 bg-neutral-100/50'
+            : 'border-neutral-300 hover:border-neutral-400 bg-neutral-50/50 hover:bg-neutral-50'
         }`}
       >
         <input
@@ -168,85 +167,85 @@ export const IngestionZone: React.FC<IngestionZoneProps> = ({
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
         <div className="flex flex-col items-center justify-center space-y-2">
-          <div className="w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center text-cyan-400 border border-slate-700">
-            <Plus className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-neutral-700 border border-neutral-200 shadow-2xs">
+            <Plus className="w-4 h-4" />
           </div>
-          <div className="text-sm font-medium text-slate-200">
-            Drag & drop intelligence sources here, or <span className="text-cyan-400 underline">browse files</span>
+          <div className="text-sm font-medium text-neutral-800">
+            Drop intelligence files here, or <span className="text-neutral-900 underline underline-offset-2">browse files</span>
           </div>
-          <div className="text-xs text-slate-500 font-mono">
-            Local coordinate-aware chunking • Extracted into Source Evidence Index
+          <div className="text-xs text-neutral-500">
+            Files remain strictly local on device • No cloud egress
           </div>
         </div>
       </div>
 
-      {/* Source Governance Rules Info */}
-      <div className="mt-3 flex items-center justify-between text-xs text-slate-400 bg-slate-900/60 border border-slate-800 px-3 py-2 rounded-lg">
+      {/* Source Governance Rules Indicator */}
+      <div className="mt-3 flex items-center justify-between text-xs text-neutral-600 bg-neutral-50 border border-neutral-200/80 px-3.5 py-2 rounded-lg">
         <span className="flex items-center gap-1.5">
-          <Shield className="w-3.5 h-3.5 text-cyan-400" />
-          <strong className="text-slate-300">Deterministic Source Governance:</strong> Exactly 1 file designated as Primary Authority
+          <Shield className="w-3.5 h-3.5 text-neutral-700" />
+          <span><strong>Source Governance:</strong> Exactly 1 primary authority</span>
         </span>
-        <span className="font-mono text-[11px] text-cyan-400">
-          Primary = 1.0 weight | Supporting = 0.5 weight
+        <span className="font-mono text-[11px] text-neutral-500">
+          Primary (1.0) • Supporting (0.5)
         </span>
       </div>
 
-      {/* Uploaded Files Table */}
+      {/* Uploaded Files List */}
       {files.length > 0 && (
         <div className="mt-4 space-y-2">
-          <div className="text-xs font-medium text-slate-400 uppercase tracking-wider px-1">
-            Ingested Sources ({files.length})
+          <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider px-1">
+            Uploaded Sources ({files.length})
           </div>
-          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+          <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
             {files.map((item) => {
               const isPrimary = item.role === 'PRIMARY';
               return (
                 <div
                   key={item.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border transition ${
+                  className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
                     isPrimary
-                      ? 'bg-cyan-950/20 border-cyan-500/50 shadow-sm'
-                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      ? 'bg-neutral-50/80 border-neutral-400 shadow-xs'
+                      : 'bg-white border-neutral-200 hover:border-neutral-300'
                   }`}
                 >
                   <div className="flex items-center space-x-3 truncate mr-3">
-                    <div className="p-1.5 bg-slate-800/80 rounded border border-slate-700">
+                    <div className="p-2 bg-neutral-100 rounded-md border border-neutral-200">
                       {getFileIcon(item.name)}
                     </div>
                     <div className="truncate">
-                      <div className="text-sm font-medium text-slate-200 truncate flex items-center gap-2">
+                      <div className="text-sm font-medium text-neutral-900 truncate flex items-center gap-2">
                         {item.name}
                         {isPrimary && (
-                          <span className="px-1.5 py-0.2 text-[10px] uppercase font-mono font-semibold bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 rounded">
-                            Authoritative Baseline
+                          <span className="px-1.5 py-0.5 text-[10px] font-mono font-medium bg-neutral-900 text-white rounded">
+                            PRIMARY AUTHORITY
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-500 font-mono">
+                      <div className="text-xs text-neutral-500 font-mono">
                         {formatSize(item.size)} • {item.type}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2 shrink-0">
+                  <div className="flex items-center space-x-1.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => setPrimary(item.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md font-medium transition ${
+                      className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-md font-medium transition-all ${
                         isPrimary
-                          ? 'bg-cyan-500 text-slate-950 font-semibold shadow-md shadow-cyan-500/20'
-                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                          ? 'bg-neutral-900 text-white shadow-xs'
+                          : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
                       }`}
                     >
-                      <CheckCircle2 className={`w-3.5 h-3.5 ${isPrimary ? 'text-slate-950' : 'text-slate-500'}`} />
-                      {isPrimary ? 'PRIMARY (1.0)' : 'Set Primary'}
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${isPrimary ? 'text-white' : 'text-neutral-400'}`} />
+                      {isPrimary ? 'Primary (1.0)' : 'Make Primary'}
                     </button>
 
                     <button
                       type="button"
                       onClick={() => removeFile(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded transition"
-                      title="Remove source"
+                      className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                      title="Remove file"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

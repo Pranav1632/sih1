@@ -46,6 +46,7 @@ export interface GlobalParams {
   keywords_must: string[];
   add_on_instruction: string;
   fact_matching_gate: boolean;
+  simulate_hard_gate?: boolean;
 }
 
 export interface IngestResponse {
@@ -59,11 +60,15 @@ export interface GenerateResponse {
 }
 
 export interface StatusResponse {
-  status: 'idle' | 'ingesting' | 'generating' | 'evaluating_gate' | 'hard_gate_halted' | 'completed' | 'error';
+  job_id?: string;
+  status: string;
   hard_gate_triggered: boolean;
+  human_approved?: boolean;
   entity_discrepancies: EntityDiscrepancy[];
   draft_outputs?: Record<string, any>;
   source_chunks?: SourceChunk[];
+  exported_files?: Record<string, string>;
+  claim_verifications?: any[];
   error_message?: string;
 }
 

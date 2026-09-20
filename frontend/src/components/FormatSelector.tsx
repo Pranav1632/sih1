@@ -13,50 +13,50 @@ export const FORMAT_CATALOG: FormatOption[] = [
   {
     id: 'advisory',
     name: 'Intelligence Advisory',
-    description: 'Formal security advisory with IOCs & mitigations (.docx / .pdf)',
+    description: 'Formal defense advisory with IOCs, CVEs & mitigations (.docx)',
     badge: 'Institutional',
     icon: Shield,
   },
   {
     id: 'exec_summary',
     name: 'Executive Summary',
-    description: 'High-level strategic situational briefing with decision vectors',
+    description: 'High-level situational briefing with strategic decisions',
     badge: 'Strategic',
     icon: FileText,
   },
   {
     id: 'presentation',
     name: 'Presentation Deck',
-    description: 'Editable PowerPoint slides with speaker notes & citations (.pptx)',
-    badge: 'Slides (.pptx)',
+    description: 'Editable 16:9 widescreen slides with speaker notes (.pptx)',
+    badge: 'PowerPoint',
     icon: Presentation,
   },
   {
     id: 'video',
     name: 'Video Production Package',
-    description: 'Scene-by-scene storyboard, narration script, and lower-third subtitles',
-    badge: 'Media Script',
+    description: 'Scene-by-scene visual cues, voiceover narration, and subtitles',
+    badge: 'Storyboard',
     icon: Video,
   },
   {
     id: 'infographic',
     name: 'Infographic Spec',
-    description: 'Modular content blocks, callout statistics, and chart layout specs',
+    description: 'Modular content blocks, callout statistics & chart recommendations',
     badge: 'Visual Spec',
     icon: BarChart3,
   },
   {
     id: 'linkedin',
     name: 'LinkedIn Post',
-    description: 'Professional thought-leadership article with hashtags & takeaways',
-    badge: 'Public Post',
+    description: 'Professional industry update with hashtags and takeaways',
+    badge: 'Article',
     icon: Linkedin,
   },
   {
     id: 'twitter',
     name: 'Twitter/X Thread',
-    description: 'Ordered multi-tweet sequence strictly respecting 280-char limits',
-    badge: 'Micro Thread',
+    description: 'Ordered multi-tweet sequence strictly within 280 characters',
+    badge: 'Thread',
     icon: Twitter,
   },
 ];
@@ -89,93 +89,97 @@ export const FormatSelector: React.FC<FormatSelectorProps> = ({
   };
 
   return (
-    <div className="bg-[#0f172a]/80 backdrop-blur border border-slate-800 rounded-xl p-5 shadow-xl">
+    <div className="bg-white border border-neutral-200/90 rounded-xl p-5 shadow-xs transition-all">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <div className="p-2 bg-emerald-950/70 border border-emerald-500/30 rounded-lg text-emerald-400">
-            <Layers className="w-5 h-5" />
+        <div className="flex items-center space-x-2.5">
+          <div className="p-2 bg-neutral-100 border border-neutral-200 rounded-lg text-neutral-900">
+            <Layers className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-100 flex items-center gap-2">
-              3. Target Output Deliverables
-              <span className="text-xs px-2 py-0.5 rounded font-mono bg-emerald-950 text-emerald-300 border border-emerald-800">
-                {selectedFormats.length} / 7 Selected
+            <h2 className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
+              Target Output Deliverables
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-neutral-100 text-neutral-700 border border-neutral-200">
+                {selectedFormats.length} Selected
               </span>
             </h2>
-            <p className="text-xs text-slate-400">
-              Parallel generator nodes anchored to immutable shared context
+            <p className="text-xs text-neutral-500">
+              Select one or more outputs to synthesize from the authoritative source
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        {/* Quick Selection Buttons */}
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={selectTopThree}
-            className="text-xs text-slate-400 hover:text-cyan-300 px-2 py-1 bg-slate-900 border border-slate-800 rounded transition"
+            className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shadow-2xs"
           >
-            Demo 3
+            Core 3
           </button>
           <button
             type="button"
             onClick={selectAll}
-            className="text-xs text-cyan-400 hover:text-cyan-300 px-2.5 py-1 bg-cyan-950/40 border border-cyan-700/40 rounded transition"
+            className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shadow-2xs"
           >
-            Select All (7)
+            All 7 Formats
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {FORMAT_CATALOG.map((item) => {
-          const isSelected = selectedFormats.includes(item.id);
-          const Icon = item.icon;
+      {/* Formats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+        {FORMAT_CATALOG.map((format) => {
+          const isSelected = selectedFormats.includes(format.id);
+          const Icon = format.icon;
+
           return (
             <div
-              key={item.id}
-              onClick={() => toggleFormat(item.id)}
-              className={`p-3.5 rounded-lg border cursor-pointer transition flex flex-col justify-between ${
+              key={format.id}
+              onClick={() => toggleFormat(format.id)}
+              className={`relative flex flex-col justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
                 isSelected
-                  ? 'bg-slate-900/90 border-cyan-500/60 shadow-md shadow-cyan-950/50'
-                  : 'bg-slate-950/50 border-slate-800/80 hover:border-slate-700 opacity-60'
+                  ? 'bg-neutral-50/70 border-neutral-900 ring-1 ring-neutral-900 shadow-xs'
+                  : 'bg-white border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50/40'
               }`}
             >
               <div>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2.5">
-                    <div
-                      className={`p-2 rounded-md ${
-                        isSelected
-                          ? 'bg-cyan-950 text-cyan-400 border border-cyan-600/30'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-100 flex items-center gap-1.5">
-                        {item.name}
-                      </div>
-                      <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
-                        {item.badge}
-                      </span>
-                    </div>
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`p-2 rounded-lg border transition-colors ${
+                    isSelected
+                      ? 'bg-neutral-900 text-white border-neutral-900'
+                      : 'bg-neutral-100 text-neutral-700 border-neutral-200'
+                  }`}>
+                    <Icon className="w-4 h-4" />
                   </div>
 
-                  <div
-                    className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${
-                      isSelected
-                        ? 'bg-cyan-500 border-cyan-400 text-slate-950'
-                        : 'border-slate-700 bg-slate-900'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full border ${
+                    isSelected
+                      ? 'bg-neutral-900 text-white border-neutral-900'
+                      : 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                  }`}>
+                    {format.badge}
+                  </span>
                 </div>
 
-                <p className="mt-2.5 text-xs text-slate-400 leading-relaxed">
-                  {item.description}
-                </p>
+                <div className="text-xs font-semibold text-neutral-900 mb-1">
+                  {format.name}
+                </div>
+                <div className="text-[11px] text-neutral-500 leading-snug line-clamp-2">
+                  {format.description}
+                </div>
+              </div>
+
+              {/* Selection Checkmark */}
+              <div className="mt-2.5 pt-2 border-t border-neutral-200/60 flex items-center justify-between">
+                <span className="text-[10px] text-neutral-400 font-mono">
+                  {isSelected ? 'Ready for render' : 'Click to add'}
+                </span>
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                  isSelected ? 'bg-neutral-900 text-white' : 'border border-neutral-300 bg-white'
+                }`}>
+                  {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                </div>
               </div>
             </div>
           );

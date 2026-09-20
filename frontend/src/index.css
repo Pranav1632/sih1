@@ -4,47 +4,32 @@
 
 @layer base {
   body {
-    @apply bg-[#080d16] text-slate-100 font-sans min-h-screen;
-    background-image: 
-      radial-gradient(ellipse at 15% 0%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
-      radial-gradient(ellipse at 85% 100%, rgba(16, 185, 129, 0.05) 0%, transparent 60%);
-    background-attachment: fixed;
+    @apply bg-[#fafafa] text-neutral-900 font-sans min-h-screen antialiased selection:bg-neutral-900 selection:text-white;
   }
 }
 
-/* Custom Tactical Scrollbars */
+/* Minimalist Light Scrollbars (Vercel Style) */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0d131f;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+  background: #d4d4d4;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #a3a3a3;
 }
 
-/* Source Evidence Neon Highlighter */
+/* Source Evidence Sentence Highlighter */
 .highlight-source-span {
-  background-color: rgba(250, 204, 21, 0.35);
-  color: #fef08a;
+  background-color: #fef08a;
+  color: #713f12;
   border-bottom: 2px solid #eab308;
-  padding: 2px 4px;
-  border-radius: 3px;
+  padding: 1px 4px;
+  border-radius: 4px;
   font-weight: 500;
-  box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
-  animation: pulse-glow 2s infinite alternate;
-}
-
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 4px rgba(234, 179, 8, 0.3);
-  }
-  100% {
-    box-shadow: 0 0 14px rgba(234, 179, 8, 0.7);
-  }
 }

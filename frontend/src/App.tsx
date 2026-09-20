@@ -4,7 +4,6 @@ import {
   Cpu,
   Download,
   Copy,
-  ExternalLink,
   CheckCircle2,
   AlertTriangle,
   Play,
@@ -16,9 +15,12 @@ import {
   Twitter,
   BookOpen,
   RefreshCw,
-  Sliders,
   Check,
   Zap,
+  ArrowRight,
+  ExternalLink,
+  Sparkles,
+  Lock,
 } from 'lucide-react';
 
 import { IngestionZone, UploadedItem } from './components/IngestionZone';
@@ -31,9 +33,6 @@ import {
   GlobalParams,
   SourceChunk,
   EntityDiscrepancy,
-  MOCK_SOURCE_CHUNKS,
-  MOCK_DRAFT_OUTPUTS,
-  FLAGSHIP_MOCK_DISCREPANCY,
   ingestFiles,
   generateDeliverables,
   getStatus,
@@ -42,35 +41,20 @@ import {
 } from './api/client';
 
 export const App: React.FC = () => {
-  // 1. Files & Ingestion State
-  const [files, setFiles] = useState<UploadedItem[]>([
-    {
-      id: 'demo_01',
-      name: 'Operation_GhostLatch_Incident_Report.pdf',
-      size: 2450000,
-      type: 'application/pdf',
-      role: 'PRIMARY',
-    },
-    {
-      id: 'demo_02',
-      name: 'Tactical_Substation_Scan_Diagram.png',
-      size: 980000,
-      type: 'image/png',
-      role: 'SUPPORTING',
-    },
-  ]);
+  // 1. Files & Ingestion State (Starts empty; clean state)
+  const [files, setFiles] = useState<UploadedItem[]>([]);
 
   // 2. Parameters State (11 Matrix Controls)
   const [parameters, setParameters] = useState<GlobalParams>({
     tone: 'Authoritative',
     audience: 'Technical',
-    detail: 'High',
-    words: 500,
+    detail: 'Standard',
+    words: 400,
     objective: 'heuristic',
     language: 'English',
     formality: 9,
-    keywords_must: ['CVE-2026-PENDING', 'GhostLatch'],
-    add_on_instruction: 'Include MITRE ATT&CK mitigation alignment.',
+    keywords_must: [],
+    add_on_instruction: '',
     fact_matching_gate: true,
   });
 
@@ -83,16 +67,17 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('advisory');
 
   // 4. Pipeline Execution State
-  const [jobId, setJobId] = useState<string>('job-sih-26154-demo');
+  const [jobId, setJobId] = useState<string>('');
   const [executionPhase, setExecutionPhase] = useState<
     'idle' | 'ingesting' | 'generating' | 'evaluating_gate' | 'hard_gate_halted' | 'completed'
   >('idle');
-  const [sourceChunks, setSourceChunks] = useState<SourceChunk[]>(MOCK_SOURCE_CHUNKS);
-  const [draftOutputs, setDraftOutputs] = useState<Record<string, any>>(MOCK_DRAFT_OUTPUTS);
+  const [sourceChunks, setSourceChunks] = useState<SourceChunk[]>([]);
+  const [draftOutputs, setDraftOutputs] = useState<Record<string, any>>({});
+  const [exportedFiles, setExportedFiles] = useState<Record<string, string>>({});
 
-  // 5. Hard Gate State (The Key Demo Moment)
+  // 5. Hard Gate State
   const [hardGateModalOpen, setHardGateModalOpen] = useState<boolean>(false);
-  const [discrepancies, setDiscrepancies] = useState<EntityDiscrepancy[]>([FLAGSHIP_MOCK_DISCREPANCY]);
+  const [discrepancies, setDiscrepancies] = useState<EntityDiscrepancy[]>([]);
   const [humanApproved, setHumanApproved] = useState<boolean>(false);
 
   // 6. Citation Drawer State
@@ -111,13 +96,20 @@ export const App: React.FC = () => {
 
   // Handle Pipeline Execution
   const handleExecute = async () => {
+    if (files.length === 0) {
+      alert('Please upload at least one intelligence file or click "Load Sample Intel" first.');
+      return;
+    }
+
     setExecutionPhase('ingesting');
     setHumanApproved(false);
+    setDraftOutputs({});
+    setDiscrepancies([]);
 
     try {
       // Step 1: Ingest
       const filesToIngest = files.map((f) => ({
-        file: f.file || new File(['mock content'], f.name, { type: f.type }),
+        file: f.file || new File(['sample report text'], f.name, { type: f.type }),
         role: f.role,
       }));
       const ingestRes = await ingestFiles(filesToIngest);
@@ -128,25 +120,62 @@ export const App: React.FC = () => {
 
       // Step 2: Generate
       setExecutionPhase('generating');
-      await generateDeliverables(ingestRes.job_id, parameters, selectedFormats);
+      const genRes = await generateDeliverables(ingestRes.job_id, parameters, selectedFormats);
 
-      // Fast forward progress for demonstration
-      setTimeout(() => {
-        setExecutionPhase('evaluating_gate');
+      // Step 3: Fetch Status & Evaluate Gate
+      setExecutionPhase('evaluating_gate');
+      const statusRes = await getStatus(ingestRes.job_id);
 
-        // Check if Fact Matching Gate is enabled -> trigger Hard Gate Climax!
-        setTimeout(() => {
-          if (parameters.fact_matching_gate) {
-            setExecutionPhase('hard_gate_halted');
-            setHardGateModalOpen(true);
-          } else {
-            setExecutionPhase('completed');
-            setHumanApproved(true);
-          }
-        }, 1200);
-      }, 1500);
+      if (statusRes.hard_gate_triggered && !statusRes.human_approved) {
+        setExecutionPhase('hard_gate_halted');
+        setDiscrepancies(statusRes.entity_discrepancies || []);
+        setDraftOutputs(statusRes.draft_outputs || {});
+        setHardGateModalOpen(true);
+      } else {
+        setExecutionPhase('completed');
+        setDraftOutputs(statusRes.draft_outputs || {});
+        setExportedFiles(statusRes.exported_files || {});
+        setHumanApproved(true);
+      }
     } catch (err) {
       console.error('Execution error:', err);
+      setExecutionPhase('idle');
+    }
+  };
+
+  // Trigger Deliberate Hard Gate Simulation
+  const handleSimulateHardGate = async () => {
+    if (files.length === 0) {
+      // Populate sample intel if empty
+      const demoItems: UploadedItem[] = [
+        {
+          id: 'demo_01',
+          name: 'Operation_GhostLatch_Incident_Report.pdf',
+          size: 2450000,
+          type: 'application/pdf',
+          role: 'PRIMARY',
+        },
+      ];
+      setFiles(demoItems);
+    }
+
+    setExecutionPhase('ingesting');
+    try {
+      const demoFile = files[0]?.file || new File(['deliberate test'], 'incident_report.pdf', { type: 'application/pdf' });
+      const ingestRes = await ingestFiles([{ file: demoFile, role: 'PRIMARY' }]);
+      setJobId(ingestRes.job_id);
+      if (ingestRes.source_chunks) setSourceChunks(ingestRes.source_chunks);
+
+      setExecutionPhase('generating');
+      await generateDeliverables(ingestRes.job_id, { ...parameters, simulate_hard_gate: true }, selectedFormats);
+
+      setExecutionPhase('hard_gate_halted');
+      const statusRes = await getStatus(ingestRes.job_id);
+      setDiscrepancies(statusRes.entity_discrepancies || []);
+      setDraftOutputs(statusRes.draft_outputs || {});
+      setHardGateModalOpen(true);
+    } catch (err) {
+      console.error('Simulation error:', err);
       setExecutionPhase('idle');
     }
   };
@@ -182,6 +211,10 @@ export const App: React.FC = () => {
       },
     });
 
+    const statusRes = await getStatus(jobId);
+    setDraftOutputs(statusRes.draft_outputs || updatedDrafts);
+    setExportedFiles(statusRes.exported_files || {});
+
     setHumanApproved(true);
     setHardGateModalOpen(false);
     setExecutionPhase('completed');
@@ -193,7 +226,7 @@ export const App: React.FC = () => {
     setCitationDrawerOpen(true);
   };
 
-  // Copy Active Deliverable to Clipboard
+  // Copy Active Deliverable
   const handleCopyContent = () => {
     const content = JSON.stringify(draftOutputs[activeTab] || {}, null, 2);
     navigator.clipboard.writeText(content);
@@ -205,75 +238,71 @@ export const App: React.FC = () => {
   const primaryDoc = files.find((f) => f.role === 'PRIMARY')?.name;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#080d16] text-slate-100">
+    <div className="min-h-screen flex flex-col bg-[#fafafa] text-neutral-900">
       
-      {/* Sovereign Air-Gapped Header Bar */}
-      <header className="border-b border-slate-800/80 bg-[#090e17]/90 backdrop-blur sticky top-0 z-40 px-6 py-3.5">
-        <div className="max-w-[1720px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Vercel-Style Minimalist Navbar */}
+      <header className="border-b border-neutral-200/80 bg-white/80 backdrop-blur sticky top-0 z-40 px-6 py-3">
+        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           
-          {/* Logo & Platform ID */}
-          <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-950">
-              <div className="w-full h-full bg-[#090d16] rounded-[10px] flex items-center justify-center text-cyan-400">
-                <Shield className="w-5 h-5" />
-              </div>
+          {/* Logo & Platform Badge */}
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center text-white shadow-xs">
+              <Shield className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold tracking-wider text-white font-mono">
-                  SENTINEL-TRANSFORM
+                <h1 className="text-sm font-bold tracking-tight text-neutral-900 font-sans">
+                  Sentinel-Transform
                 </h1>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-700/60">
-                  v1.0-DEFENSE
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
+                  v1.0 Sovereign
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Sovereign Multi-Format Intelligence Transformation Engine • <strong className="text-slate-300">NTRO PS 26154</strong>
+              <p className="text-xs text-neutral-500">
+                Multi-Format Intelligence Transformation Engine • NTRO PS 26154
               </p>
             </div>
           </div>
 
-          {/* Air-Gapped Sovereign Telemetry Strip */}
-          <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs">
-            {/* Air-gapped badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span className="font-semibold text-[11px] tracking-wide">AIR-GAPPED (0 KB EGRESS)</span>
+          {/* Telemetry Pills & Action Controls */}
+          <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+            {/* Air-gapped status pill */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Air-Gapped (0 KB Egress)</span>
             </div>
 
-            {/* Hardware badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-300">
-              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-[11px]">HOST: LOCAL GPU (RTX 3050)</span>
+            {/* Host status pill */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-[11px]">
+              <Cpu className="w-3.5 h-3.5 text-neutral-500" />
+              <span>Host: Local CPU/GPU</span>
             </div>
 
-            {/* Manual Hard Gate Test Button (Allows demonstrating the flagship moment anytime) */}
+            {/* Test Simulation Button */}
             <button
-              onClick={() => setHardGateModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/60 border border-rose-700/60 text-rose-300 text-[11px] transition font-semibold"
-              title="Trigger the Flagship Hard Gate modal for evaluator demonstration"
+              type="button"
+              onClick={handleSimulateHardGate}
+              className="flex items-center gap-1 px-3 py-1 text-xs font-sans font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg transition-colors shadow-2xs"
+              title="Test the flagship Hard Gate interception moment"
             >
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-              Demo Hard Gate
+              <AlertTriangle className="w-3 h-3 text-amber-600" />
+              Simulate Hard Gate
             </button>
           </div>
-
         </div>
       </header>
 
-      {/* Main Operational Workspace (2-Column Grid) */}
-      <main className="flex-1 max-w-[1720px] w-full mx-auto p-4 sm:p-6 grid grid-cols-1 xl:grid-cols-12 gap-6">
+      {/* Main Two-Column Layout */}
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* LEFT COLUMN: INGESTION & CONTROLS (5 cols on xl) */}
-        <div className="xl:col-span-5 space-y-6">
-          {/* 1. Multimodal Ingestion */}
+        {/* Left Column: Ingestion & Configuration (5 cols) */}
+        <div className="lg:col-span-5 space-y-5">
           <IngestionZone
             files={files}
             onFilesChange={setFiles}
             isIngesting={executionPhase === 'ingesting'}
           />
 
-          {/* 2. Parameter Matrix */}
           <ParameterControls
             parameters={parameters}
             onChange={setParameters}
@@ -281,477 +310,490 @@ export const App: React.FC = () => {
             primaryDocName={primaryDoc}
           />
 
-          {/* 3. Output Formats Multi-Select */}
           <FormatSelector
             selectedFormats={selectedFormats}
             onChange={setSelectedFormats}
           />
 
-          {/* Action Trigger Button */}
-          <div className="pt-1">
-            <button
-              type="button"
-              disabled={files.length === 0 || selectedFormats.length === 0 || executionPhase === 'generating'}
-              onClick={handleExecute}
-              className={`w-full py-4 px-6 rounded-xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 transition shadow-xl ${
-                executionPhase === 'generating' || executionPhase === 'ingesting'
-                  ? 'bg-cyan-950 border border-cyan-600/50 text-cyan-300 cursor-wait animate-pulse'
-                  : 'bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 shadow-cyan-950/80 font-extrabold hover:shadow-cyan-500/20 active:scale-[0.99]'
-              }`}
-            >
-              {executionPhase === 'generating' ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  Orchestrating Parallel Generators (Ollama Runtime)...
-                </>
-              ) : executionPhase === 'ingesting' ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  Ingesting & Indexing Forensic Coordinates...
-                </>
-              ) : (
-                <>
-                  <Zap className="w-5 h-5 fill-current" />
-                  Execute Multi-Format Transformation
-                </>
-              )}
-            </button>
-            <div className="text-center text-[11px] font-mono text-slate-500 mt-2">
-              LangGraph State Machine • Single-Pass Grounded Context • Sub-50ms Verification Gate
-            </div>
-          </div>
+          {/* Primary Action Button */}
+          <button
+            type="button"
+            onClick={handleExecute}
+            disabled={executionPhase === 'ingesting' || executionPhase === 'generating' || executionPhase === 'evaluating_gate'}
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-sm rounded-xl shadow-xs disabled:opacity-50 transition-all cursor-pointer"
+          >
+            {executionPhase === 'idle' && (
+              <>
+                <Play className="w-4 h-4 fill-white" />
+                <span>Execute Transformation ({selectedFormats.length} Formats)</span>
+              </>
+            )}
+            {executionPhase === 'ingesting' && (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Parsing & Normalizing Chunks...</span>
+              </>
+            )}
+            {executionPhase === 'generating' && (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Generating Pydantic Models in Parallel...</span>
+              </>
+            )}
+            {executionPhase === 'evaluating_gate' && (
+              <>
+                <Shield className="w-4 h-4 animate-pulse" />
+                <span>Evaluating Verification Gate (Sub-10ms NER)...</span>
+              </>
+            )}
+            {executionPhase === 'hard_gate_halted' && (
+              <>
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span>Review Gate Triggered • Open Modal</span>
+              </>
+            )}
+            {executionPhase === 'completed' && (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Outputs Verified • Re-run Pipeline</span>
+              </>
+            )}
+          </button>
         </div>
 
-        {/* RIGHT COLUMN: ARTIFACT PREVIEW & CITATION VIEWER (7 cols on xl) */}
-        <div className="xl:col-span-7 flex flex-col space-y-4">
+        {/* Right Column: Deliverables Workspace (7 cols) */}
+        <div className="lg:col-span-7 flex flex-col space-y-4">
           
-          {/* Pipeline Execution Progress Indicator */}
-          <div className="bg-[#0f172a]/90 backdrop-blur border border-slate-800 rounded-xl p-4 shadow-lg">
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${executionPhase === 'generating' ? 'animate-spin' : ''}`} />
-                LangGraph State Machine Status
-              </span>
-              <span className="font-mono text-cyan-400 uppercase text-[11px]">
-                {executionPhase === 'idle' && 'Ready for Input'}
-                {executionPhase === 'ingesting' && '1. Normalizing Ingestion Chunks'}
-                {executionPhase === 'generating' && '2. Parallel Generator Nodes Active'}
-                {executionPhase === 'evaluating_gate' && '3. spaCy + RapidFuzz Gate Evaluation'}
-                {executionPhase === 'hard_gate_halted' && '⚠️ HARD GATE HALTED: Operator Review Needed'}
-                {executionPhase === 'completed' && '✓ Grounded & Verified: Export Ready'}
-              </span>
-            </div>
-
-            {/* Stepper Bar */}
-            <div className="grid grid-cols-4 gap-1.5 text-center font-mono text-[10px]">
-              <div
-                className={`py-1.5 px-1 rounded transition ${
-                  executionPhase !== 'idle'
-                    ? 'bg-cyan-500 text-slate-950 font-bold'
-                    : 'bg-slate-800 text-slate-500'
-                }`}
-              >
-                1. Ingestion & SEI
-              </div>
-              <div
-                className={`py-1.5 px-1 rounded transition ${
-                  executionPhase === 'generating' || executionPhase === 'evaluating_gate' || executionPhase === 'hard_gate_halted' || executionPhase === 'completed'
-                    ? 'bg-cyan-500 text-slate-950 font-bold'
-                    : 'bg-slate-800 text-slate-500'
-                }`}
-              >
-                2. Shared Context
-              </div>
-              <div
-                className={`py-1.5 px-1 rounded transition ${
-                  executionPhase === 'hard_gate_halted'
-                    ? 'bg-rose-500 text-white font-bold animate-pulse'
-                    : executionPhase === 'completed'
-                    ? 'bg-emerald-500 text-slate-950 font-bold'
-                    : 'bg-slate-800 text-slate-500'
-                }`}
-              >
-                3. Entity Hard Gate
-              </div>
-              <div
-                className={`py-1.5 px-1 rounded transition ${
-                  executionPhase === 'completed'
-                    ? 'bg-emerald-500 text-slate-950 font-bold'
-                    : 'bg-slate-800 text-slate-500'
-                }`}
-              >
-                4. Deterministic Export
-              </div>
-            </div>
-          </div>
-
-          {/* Deliverable Viewer Card */}
-          <div className="flex-1 bg-[#0f172a]/80 backdrop-blur border border-slate-800 rounded-xl flex flex-col shadow-2xl overflow-hidden min-h-[560px]">
+          {/* Deliverables Card Container */}
+          <div className="bg-white border border-neutral-200/90 rounded-xl shadow-xs flex-1 flex flex-col overflow-hidden min-h-[640px]">
             
-            {/* Format Tabs & Action Buttons Bar */}
-            <div className="p-3 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
-              
-              {/* Tabs */}
-              <div className="flex items-center space-x-1 overflow-x-auto">
-                {selectedFormats.map((fmt) => (
-                  <button
-                    key={fmt}
-                    onClick={() => setActiveTab(fmt)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition capitalize flex items-center gap-1.5 ${
-                      activeTab === fmt
-                        ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-950/60'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                    }`}
-                  >
-                    {fmt.replace('_', ' ')}
-                  </button>
-                ))}
+            {/* Tab Bar Header */}
+            <div className="border-b border-neutral-200 p-3 bg-neutral-50/50 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {selectedFormats.map((fId) => {
+                  const isActive = activeTab === fId;
+                  const formatLabels: Record<string, string> = {
+                    advisory: 'Advisory',
+                    exec_summary: 'Executive Summary',
+                    presentation: 'Presentation (.pptx)',
+                    video: 'Video Script',
+                    infographic: 'Infographics',
+                    linkedin: 'LinkedIn',
+                    twitter: 'Twitter/X',
+                  };
+
+                  return (
+                    <button
+                      key={fId}
+                      onClick={() => setActiveTab(fId)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                        isActive
+                          ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80 font-semibold'
+                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                      }`}
+                    >
+                      {formatLabels[fId] || fId}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Action Buttons: Export & Copy */}
-              <div className="flex items-center space-x-2">
+              {/* Action Toolbar */}
+              <div className="flex items-center gap-2 shrink-0">
+                {jobId && humanApproved && (
+                  <>
+                    <a
+                      href={getExportUrl('pptx', jobId)}
+                      download
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-800 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
+                      title="Download Editable PowerPoint"
+                    >
+                      <Download className="w-3.5 h-3.5 text-neutral-600" />
+                      <span>.pptx</span>
+                    </a>
+
+                    <a
+                      href={getExportUrl('docx', jobId)}
+                      download
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-800 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
+                      title="Download Formal Advisory DOCX"
+                    >
+                      <Download className="w-3.5 h-3.5 text-neutral-600" />
+                      <span>.docx</span>
+                    </a>
+                  </>
+                )}
+
                 <button
                   type="button"
                   onClick={handleCopyContent}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition"
-                  title="Copy deliverable content"
+                  disabled={!draftOutputs[activeTab]}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs disabled:opacity-40 transition-colors"
+                  title="Copy deliverable content to clipboard"
                 >
-                  {copiedNotification ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copiedNotification ? 'Copied!' : 'Copy'}
+                  {copiedNotification ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700 font-semibold">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-neutral-500" />
+                      <span>Copy</span>
+                    </>
+                  )}
                 </button>
-
-                {/* Exporter downloads (.pptx / .docx) */}
-                <a
-                  href={getExportUrl(activeTab === 'presentation' ? 'pptx' : 'docx', jobId)}
-                  download
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition ${
-                    executionPhase === 'hard_gate_halted' && !humanApproved
-                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-                      : 'bg-emerald-600 hover:bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950'
-                  }`}
-                  title={
-                    executionPhase === 'hard_gate_halted' && !humanApproved
-                      ? 'Export is physically locked until analyst reviews the Hard Gate discrepancy'
-                      : `Download compiled deliverable`
-                  }
-                  onClick={(e) => {
-                    if (executionPhase === 'hard_gate_halted' && !humanApproved) {
-                      e.preventDefault();
-                      setHardGateModalOpen(true);
-                    }
-                  }}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  {activeTab === 'presentation' ? 'Download .PPTX' : 'Download .DOCX'}
-                </a>
               </div>
             </div>
 
-            {/* Deliverable Content Body */}
-            <div className="flex-1 p-6 overflow-y-auto space-y-5 font-sans">
-              {renderDeliverableContent(activeTab, draftOutputs, openCitation)}
+            {/* Tab Body View */}
+            <div className="p-6 flex-1 overflow-y-auto bg-white">
+              {draftOutputs[activeTab] ? (
+                <div className="space-y-6 max-w-3xl animate-in fade-in duration-150">
+                  
+                  {/* Verification Status Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <span className="text-xs font-medium text-neutral-700">
+                        {humanApproved ? 'Operator Verified & Signed' : 'Draft Generated'}
+                      </span>
+                    </div>
+
+                    {/* Cited Chunk Badges */}
+                    {draftOutputs[activeTab]?.cited_chunk_ids && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-neutral-500">Evidence Citations:</span>
+                        {draftOutputs[activeTab].cited_chunk_ids.map((cId: string) => (
+                          <button
+                            key={cId}
+                            onClick={() => openCitation(cId)}
+                            className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 transition-colors"
+                          >
+                            [{cId}]
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Format 1: Intelligence Advisory */}
+                  {activeTab === 'advisory' && (
+                    <div className="space-y-5">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-900 text-white">
+                            {draftOutputs.advisory.advisory_id || 'NTRO-ADV-2026-09'}
+                          </span>
+                          <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${
+                            draftOutputs.advisory.severity_level === 'HIGH'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}>
+                            SEVERITY: {draftOutputs.advisory.severity_level || 'HIGH'}
+                          </span>
+                        </div>
+                        <h2 className="text-lg font-bold text-neutral-900">
+                          {draftOutputs.advisory.title}
+                        </h2>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                          1. Threat Overview
+                        </h3>
+                        <p className="text-sm text-neutral-700 leading-relaxed bg-neutral-50/70 border border-neutral-200/80 p-3.5 rounded-xl">
+                          {draftOutputs.advisory.threat_overview}
+                        </p>
+                      </div>
+
+                      {draftOutputs.advisory.affected_systems && (
+                        <div className="space-y-2">
+                          <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                            2. Affected Systems & Assets
+                          </h3>
+                          <div className="flex flex-wrap gap-1.5">
+                            {draftOutputs.advisory.affected_systems.map((sys: string, idx: number) => (
+                              <span key={idx} className="text-xs px-2.5 py-1 bg-neutral-100 text-neutral-800 rounded-lg border border-neutral-200">
+                                {sys}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {draftOutputs.advisory.indicators_of_compromise && (
+                        <div className="space-y-2">
+                          <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                            3. Technical Indicators of Compromise (IOCs)
+                          </h3>
+                          <ul className="space-y-1.5 text-xs text-neutral-700 font-mono bg-neutral-50/70 border border-neutral-200/80 p-3.5 rounded-xl">
+                            {draftOutputs.advisory.indicators_of_compromise.map((ioc: string, idx: number) => (
+                              <li key={idx} className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                <span>{ioc}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {draftOutputs.advisory.recommended_mitigations && (
+                        <div className="space-y-2">
+                          <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                            4. Recommended Mitigations & Action Directives
+                          </h3>
+                          <div className="space-y-2">
+                            {draftOutputs.advisory.recommended_mitigations.map((m: string, idx: number) => (
+                              <div key={idx} className="flex items-start gap-2.5 p-3 rounded-lg border border-neutral-200 bg-neutral-50/40 text-xs text-neutral-800">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                <span className="leading-relaxed">{m}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {draftOutputs.advisory.compliance_and_governance && (
+                        <div className="space-y-1.5 p-3.5 bg-neutral-50 rounded-xl border border-neutral-200 text-xs">
+                          <div className="font-semibold text-neutral-900">Compliance & Governance Protocol:</div>
+                          <div className="text-neutral-700 font-mono text-[11px]">
+                            {draftOutputs.advisory.compliance_and_governance}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Format 2: Executive Summary */}
+                  {activeTab === 'exec_summary' && (
+                    <div className="space-y-5">
+                      <div className="flex items-center justify-between pb-2">
+                        <h2 className="text-lg font-bold text-neutral-900">Executive Situational Briefing</h2>
+                        <span className="text-xs font-mono px-2 py-0.5 bg-neutral-100 text-neutral-800 border border-neutral-200 rounded">
+                          Confidence: {draftOutputs.exec_summary.confidence_assessment || 'HIGH'}
+                        </span>
+                      </div>
+
+                      <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-xl text-sm text-neutral-800 leading-relaxed">
+                        <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Situation Overview</div>
+                        {draftOutputs.exec_summary.situation_overview}
+                      </div>
+
+                      {draftOutputs.exec_summary.core_findings && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">Core Analytical Findings</div>
+                          <div className="space-y-1.5">
+                            {draftOutputs.exec_summary.core_findings.map((f: string, idx: number) => (
+                              <div key={idx} className="p-3 bg-white border border-neutral-200 rounded-lg text-xs text-neutral-800 flex items-start gap-2">
+                                <span className="font-mono text-neutral-400 font-bold">{idx + 1}.</span>
+                                <span>{f}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {draftOutputs.exec_summary.strategic_impact && (
+                        <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-neutral-800">
+                          <strong className="text-neutral-900 block mb-1">Strategic Infrastructure Impact:</strong>
+                          {draftOutputs.exec_summary.strategic_impact}
+                        </div>
+                      )}
+
+                      {draftOutputs.exec_summary.decisions_required && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">Leadership Decisions Required</div>
+                          <div className="space-y-1.5">
+                            {draftOutputs.exec_summary.decisions_required.map((d: string, idx: number) => (
+                              <div key={idx} className="p-3 bg-neutral-900 text-white rounded-lg text-xs flex items-center justify-between">
+                                <span>{d}</span>
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-300">Requires Sign-off</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Format 3: Presentation Deck */}
+                  {activeTab === 'presentation' && (
+                    <div className="space-y-5">
+                      <div>
+                        <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200">
+                          Target: {draftOutputs.presentation.target_audience || 'Defense Leadership'}
+                        </span>
+                        <h2 className="text-lg font-bold text-neutral-900 mt-1">
+                          {draftOutputs.presentation.deck_title}
+                        </h2>
+                      </div>
+
+                      <div className="space-y-4">
+                        {draftOutputs.presentation.slides?.map((slide: any, idx: number) => (
+                          <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white shadow-2xs space-y-3">
+                            <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                              <span className="text-xs font-bold font-mono text-neutral-500">SLIDE {slide.slide_number || idx + 1}</span>
+                              <span className="text-xs font-semibold text-neutral-900">{slide.title}</span>
+                            </div>
+
+                            <ul className="space-y-1 text-xs text-neutral-700 list-disc list-inside">
+                              {slide.bullet_points?.map((bp: string, bpIdx: number) => (
+                                <li key={bpIdx}>{bp}</li>
+                              ))}
+                            </ul>
+
+                            {slide.speaker_notes && (
+                              <div className="p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg text-[11px] text-neutral-600 italic">
+                                <strong>Speaker Notes:</strong> {slide.speaker_notes}
+                              </div>
+                            )}
+
+                            {slide.visual_guidance && (
+                              <div className="text-[10px] font-mono text-neutral-400">
+                                Visual Guidance: {slide.visual_guidance}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Format 4: Video Package */}
+                  {activeTab === 'video' && (
+                    <div className="space-y-5">
+                      <div>
+                        <h2 className="text-lg font-bold text-neutral-900">{draftOutputs.video.video_title}</h2>
+                        {draftOutputs.video.logline && (
+                          <p className="text-xs text-neutral-500 italic mt-0.5">{draftOutputs.video.logline}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        {draftOutputs.video.scenes?.map((sc: any, idx: number) => (
+                          <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white space-y-2">
+                            <div className="flex items-center justify-between text-xs pb-2 border-b border-neutral-100">
+                              <span className="font-mono font-bold text-neutral-900">Scene {sc.scene_number || idx + 1} ({sc.duration_seconds || 15}s)</span>
+                              <span className="font-mono text-[10px] text-neutral-400">{sc.music_sound_cues}</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                              <div className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-200/60">
+                                <span className="text-[10px] font-mono text-neutral-400 block mb-1">Visual Storyboard:</span>
+                                <span className="text-neutral-700">{sc.visual_description}</span>
+                              </div>
+                              <div className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-200/60">
+                                <span className="text-[10px] font-mono text-neutral-400 block mb-1">Voiceover Narration:</span>
+                                <span className="text-neutral-800 font-medium">"{sc.narration_voiceover}"</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Format 5: Infographic */}
+                  {activeTab === 'infographic' && (
+                    <div className="space-y-5">
+                      <h2 className="text-lg font-bold text-neutral-900">{draftOutputs.infographic.infographic_title}</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {draftOutputs.infographic.sections?.map((sec: any, idx: number) => (
+                          <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white space-y-2">
+                            <div className="text-xs font-bold text-neutral-900">{sec.header}</div>
+                            <p className="text-xs text-neutral-600">{sec.descriptive_copy}</p>
+                            {sec.key_statistic && (
+                              <div className="p-2 bg-neutral-50 rounded-lg font-mono text-xs font-bold text-neutral-900">
+                                {sec.key_statistic}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Format 6: LinkedIn */}
+                  {activeTab === 'linkedin' && (
+                    <div className="space-y-4 max-w-xl p-5 border border-neutral-200 rounded-xl bg-white shadow-xs">
+                      <div className="text-sm font-bold text-neutral-900">{draftOutputs.linkedin.headline}</div>
+                      <div className="text-xs text-neutral-700 font-medium">{draftOutputs.linkedin.opening_hook}</div>
+                      <div className="space-y-2 text-xs text-neutral-700 leading-relaxed">
+                        {draftOutputs.linkedin.body_paragraphs?.map((p: string, idx: number) => (
+                          <p key={idx}>{p}</p>
+                        ))}
+                      </div>
+                      {draftOutputs.linkedin.key_takeaways && (
+                        <div className="p-3 bg-neutral-50 rounded-lg space-y-1">
+                          <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block">Key Takeaways:</span>
+                          <ul className="text-xs text-neutral-700 list-disc list-inside space-y-0.5">
+                            {draftOutputs.linkedin.key_takeaways.map((t: string, idx: number) => (
+                              <li key={idx}>{t}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div className="text-xs text-neutral-500 font-mono">
+                        {draftOutputs.linkedin.hashtags?.join(' ')}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Format 7: Twitter */}
+                  {activeTab === 'twitter' && (
+                    <div className="space-y-3 max-w-md">
+                      <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                        Twitter Thread ({draftOutputs.twitter.tweets?.length || 0} Tweets)
+                      </div>
+                      {draftOutputs.twitter.tweets?.map((t: any, idx: number) => (
+                        <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white space-y-2 shadow-2xs">
+                          <div className="flex items-center justify-between text-[11px] text-neutral-400 font-mono">
+                            <span>Tweet {t.tweet_number || idx + 1}</span>
+                            <span>{t.character_count || t.content?.length} / 280 chars</span>
+                          </div>
+                          <p className="text-xs text-neutral-800 leading-relaxed">{t.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Vercel Empty State */
+                <div className="h-full flex flex-col items-center justify-center py-20 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-500">
+                    <FileText className="w-6 h-6 stroke-[1.5]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-neutral-900">
+                      No Deliverables Generated Yet
+                    </h3>
+                    <p className="text-xs text-neutral-500 max-w-sm mt-1 leading-relaxed">
+                      Upload an intelligence source in the ingestion panel on the left and click <strong className="text-neutral-700">"Execute Transformation"</strong> to compile verified deliverables.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {/* Bottom Citation Drawer Quick-Bar */}
-            <div className="p-3.5 bg-slate-950 border-t border-slate-800/90 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-slate-400">
-                <BookOpen className="w-4 h-4 text-cyan-400" />
-                <span>
-                  Click any <strong className="text-yellow-400 underline decoration-dotted">[Ref: Page N]</strong> badge to open the Forensic Evidence Drawer.
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setCitationDrawerOpen(true)}
-                className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-mono text-xs underline font-medium"
-              >
-                Inspect Source Evidence Drawer &rarr;
-              </button>
-            </div>
-
           </div>
         </div>
-
       </main>
 
-      {/* Flagship Climax: Hard Gate Review Modal */}
+      {/* Hard Gate Interception Modal */}
       <HardGateModal
         isOpen={hardGateModalOpen}
         discrepancies={discrepancies}
-        jobId={jobId}
+        jobId={jobId || 'job-sih-demo'}
         onConfirmAction={handleHardGateDecision}
       />
 
-      {/* Forensic Citation Drawer with Neon Highlight */}
+      {/* Slide-out Source Evidence Provenance Drawer */}
       <SourceEvidenceViewer
         isOpen={citationDrawerOpen}
         onClose={() => setCitationDrawerOpen(false)}
         chunks={sourceChunks}
         activeChunkId={activeCitationChunkId}
-        onSelectChunk={(id) => setActiveCitationChunkId(id)}
       />
-
     </div>
   );
 };
-
-// Sub-renderer for the 7 Deliverables with embedded Citation Badges
-function renderDeliverableContent(
-  format: string,
-  drafts: Record<string, any>,
-  onCitationClick: (chunkId: string) => void
-) {
-  const data = drafts[format];
-
-  if (!data) {
-    return (
-      <div className="text-center text-slate-500 py-16">
-        Deliverable generated on execution. Click <strong>Execute Multi-Format Transformation</strong> to begin.
-      </div>
-    );
-  }
-
-  // Citation Badge Component Helper
-  const CitationBadge = ({ chunkId, label }: { chunkId: string; label: string }) => (
-    <button
-      type="button"
-      onClick={() => onCitationClick(chunkId)}
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 ml-1 text-[11px] font-mono font-bold bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-300 border border-yellow-500/50 rounded cursor-pointer transition shadow-sm hover:scale-105"
-      title="Click to view exact character coordinates in Source Evidence Viewer"
-    >
-      <BookOpen className="w-3 h-3" />
-      {label}
-    </button>
-  );
-
-  switch (format) {
-    case 'advisory':
-      return (
-        <div className="space-y-4 text-slate-200">
-          <div className="border-b border-slate-700 pb-3 flex justify-between items-start">
-            <div>
-              <span className="text-[11px] font-mono uppercase px-2 py-0.5 bg-rose-950 text-rose-300 border border-rose-700 rounded font-bold">
-                SEVERITY: {data.severity_level || 'HIGH'}
-              </span>
-              <h2 className="text-lg font-bold text-white mt-1.5">{data.title}</h2>
-              <div className="text-xs text-slate-400 font-mono mt-0.5">Ref: {data.advisory_id}</div>
-            </div>
-            <div className="text-right text-xs font-mono text-slate-400">
-              National Technical Research Organisation
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase text-cyan-400">1. Threat Overview</h3>
-            <p className="text-sm leading-relaxed text-slate-300">
-              {data.threat_overview}
-              <CitationBadge chunkId="doc_01_chunk_01" label="[Ref: Page 1, §2]" />
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase text-cyan-400">2. Affected Systems</h3>
-            <ul className="list-disc list-inside text-sm text-slate-300 space-y-1 pl-1">
-              {data.affected_systems?.map((s: string, i: number) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase text-cyan-400">3. Indicators of Compromise (IOCs)</h3>
-            <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-xs text-rose-300 space-y-1">
-              {data.indicators_of_compromise?.map((ioc: string, i: number) => (
-                <div key={i}>• {ioc}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase text-emerald-400">4. Recommended Mitigations</h3>
-            <ul className="list-disc list-inside text-sm text-slate-300 space-y-1 pl-1">
-              {data.recommended_mitigations?.map((m: string, i: number) => (
-                <li key={i}>{m}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs space-y-1">
-            <span className="font-semibold text-slate-300">Compliance & Governance:</span>
-            <div className="text-slate-300">
-              {data.compliance_and_governance}
-              <CitationBadge chunkId="doc_01_chunk_02" label="[Ref: Page 3, §2]" />
-            </div>
-          </div>
-        </div>
-      );
-
-    case 'exec_summary':
-      return (
-        <div className="space-y-4 text-slate-200">
-          <div className="border-b border-slate-700 pb-3">
-            <h2 className="text-lg font-bold text-white">Executive Situational Briefing</h2>
-            <div className="text-xs text-slate-400 font-mono">Confidence Assessment: HIGH (Grounded)</div>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase text-cyan-400">Strategic Overview</h3>
-            <p className="text-sm leading-relaxed text-slate-300">
-              {data.situation_overview}
-              <CitationBadge chunkId="doc_01_chunk_01" label="[Ref: Page 1]" />
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase text-cyan-400">Core Findings</h3>
-            <div className="space-y-2">
-              {data.core_findings?.map((cf: string, i: number) => (
-                <div key={i} className="p-2.5 bg-slate-900/70 border border-slate-800 rounded text-xs text-slate-300">
-                  • {cf}
-                  <CitationBadge chunkId="doc_01_chunk_02" label="[Ref: Page 3]" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase text-cyan-400">Decisions Required</h3>
-            <ul className="list-disc list-inside text-sm text-slate-300 space-y-1 pl-1">
-              {data.decisions_required?.map((d: string, i: number) => (
-                <li key={i}>{d}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      );
-
-    case 'presentation':
-      return (
-        <div className="space-y-4">
-          <div className="border-b border-slate-700 pb-3">
-            <h2 className="text-lg font-bold text-white">{data.deck_title}</h2>
-            <div className="text-xs text-slate-400 font-mono">Target Audience: {data.target_audience}</div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            {data.slides?.map((s: any, idx: number) => (
-              <div key={idx} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2.5 shadow-md">
-                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                  <span className="text-xs font-bold text-cyan-400 font-mono">
-                    SLIDE {s.slide_number}: {s.title}
-                  </span>
-                  <CitationBadge chunkId="doc_01_chunk_01" label="[Ref: Chunk 1]" />
-                </div>
-                <ul className="list-disc list-inside text-xs text-slate-300 space-y-1 pl-1">
-                  {s.bullet_points?.map((bp: string, i: number) => (
-                    <li key={i}>{bp}</li>
-                  ))}
-                </ul>
-                <div className="p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400 italic">
-                  <strong>Speaker Notes:</strong> {s.speaker_notes}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 'linkedin':
-      return (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-          <div className="flex items-center space-x-2 text-cyan-400 text-xs font-bold font-mono">
-            <Linkedin className="w-4 h-4" />
-            <span>LINKEDIN PROFESSIONAL PUBLICATION CARD</span>
-          </div>
-          <h3 className="text-base font-bold text-white">{data.headline}</h3>
-          <p className="text-sm font-semibold text-slate-300 italic">{data.opening_hook}</p>
-          <div className="space-y-2 text-xs text-slate-300 leading-relaxed">
-            {data.body_paragraphs?.map((p: string, i: number) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
-          <div className="pt-2 border-t border-slate-800 flex flex-wrap gap-1.5 text-xs text-cyan-400 font-mono">
-            {data.hashtags?.map((h: string, i: number) => (
-              <span key={i}>{h}</span>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 'twitter':
-      return (
-        <div className="space-y-3">
-          <div className="text-xs font-bold text-cyan-400 font-mono uppercase">
-            {data.thread_title} ({data.total_tweets} Tweets)
-          </div>
-          <div className="space-y-2">
-            {data.tweets?.map((tw: any) => (
-              <div key={tw.tweet_number} className="bg-slate-900 border border-slate-800 p-3.5 rounded-lg space-y-2">
-                <p className="text-xs text-slate-200 leading-relaxed">{tw.content}</p>
-                <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
-                  <span>{tw.character_count} / 280 chars</span>
-                  <CitationBadge chunkId="doc_01_chunk_01" label="[doc_01:p1]" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 'video':
-      return (
-        <div className="space-y-4">
-          <div className="border-b border-slate-700 pb-2">
-            <h2 className="text-base font-bold text-white">{data.video_title}</h2>
-            <div className="text-xs text-slate-400 font-mono">Duration: {data.target_duration} • Logline: {data.logline}</div>
-          </div>
-          <div className="space-y-3">
-            {data.scenes?.map((sc: any) => (
-              <div key={sc.scene_number} className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
-                <div className="text-xs font-bold text-cyan-400 font-mono">
-                  SCENE {sc.scene_number} ({sc.duration_seconds}s)
-                </div>
-                <div className="text-xs text-slate-300"><strong>Visual:</strong> {sc.visual_description}</div>
-                <div className="text-xs text-emerald-300 bg-slate-950 p-2 rounded">
-                  <strong>Narration Voiceover:</strong> "{sc.narration_voiceover}"
-                </div>
-                <div className="text-[11px] text-slate-400 font-mono">
-                  <strong>Subtitles:</strong> {sc.on_screen_subtitles} • <strong>Sound:</strong> {sc.music_sound_cues}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 'infographic':
-      return (
-        <div className="space-y-4">
-          <div className="border-b border-slate-700 pb-2">
-            <h2 className="text-base font-bold text-white">{data.infographic_title}</h2>
-            <div className="text-xs text-slate-400 font-mono">Theme: {data.central_theme}</div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {data.sections?.map((sec: any) => (
-              <div key={sec.section_order} className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
-                <div className="text-xs font-bold text-cyan-400 font-mono uppercase">
-                  {sec.header}
-                </div>
-                <div className="text-xl font-extrabold text-white font-mono text-cyan-300">
-                  {sec.key_statistic_or_callout}
-                </div>
-                <p className="text-xs text-slate-300">{sec.descriptive_copy}</p>
-                <div className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800 inline-block">
-                  Chart: {sec.recommended_chart_type}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    default:
-      return <pre className="text-xs font-mono text-slate-300">{JSON.stringify(data, null, 2)}</pre>;
-  }
-}
