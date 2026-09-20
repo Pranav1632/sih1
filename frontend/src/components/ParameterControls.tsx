@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sliders, Clock, ChevronDown, ChevronUp, Globe, Sparkles, Tag, ShieldCheck } from 'lucide-react';
+import { Sliders, Clock, ChevronDown, ChevronUp, Globe, Sparkles, Tag, ShieldCheck, Cpu } from 'lucide-react';
 import { GlobalParams } from '../api/client';
 
 interface ParameterControlsProps {
@@ -197,30 +197,19 @@ export const ParameterControls: React.FC<ParameterControlsProps> = ({
             {/* 5. Objective & Engine Mode */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-neutral-50/70 border border-neutral-200/80 p-3 rounded-lg space-y-1.5">
-                <span className="text-xs font-medium text-neutral-700 block">5. Synthesis Objective</span>
-                <div className="grid grid-cols-2 gap-1">
-                  <button
-                    type="button"
-                    onClick={() => updateField('objective', 'generative')}
-                    className={`py-1 text-xs rounded-md transition-all font-medium ${
-                      parameters.objective === 'generative'
-                        ? 'bg-neutral-900 text-white shadow-xs'
-                        : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
-                    }`}
-                  >
-                    LLM Generative
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateField('objective', 'heuristic')}
-                    className={`py-1 text-xs rounded-md transition-all font-medium ${
-                      parameters.objective === 'heuristic'
-                        ? 'bg-neutral-900 text-white shadow-xs'
-                        : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
-                    }`}
-                  >
-                    Air-Gapped Rule
-                  </button>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-neutral-700 block">5. Synthesis Engine</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    MANDATORY LOCAL LLM
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-md bg-white border border-neutral-200 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-neutral-700" />
+                    <span className="font-semibold text-neutral-900">Ollama qwen2.5:3b</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-neutral-500">0 KB Cloud Egress</span>
                 </div>
               </div>
 

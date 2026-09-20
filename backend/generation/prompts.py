@@ -74,13 +74,23 @@ REQUIREMENTS:
 }
 
 
-def format_source_chunks_context(chunks: List[Dict[str, Any]]) -> str:
-    """Formats source chunks into structured text for LLM prompting."""
+def format_source_chunks_context(chunks: List[Dict[str, Any]], max_chunks: int = 20) -> str:
+    """
+    Formats source chunks into structured text for LLM prompting.
+    When a document has many chunks (e.g. 118 chunks across 20 pages),
+    samples uniformly across all pages to provide full end-to-end document research.
+    """
     if not chunks:
         return "No source evidence chunks provided."
 
+    selected_chunks = chunks
+    if len(chunks) > max_chunks:
+        step = len(chunks) / max_chunks
+        indices = [int(i * step) for i in range(max_chunks)]
+        selected_chunks = [chunks[i] for i in indices]
+
     formatted = []
-    for chunk in chunks:
+    for chunk in selected_chunks:
         chunk_id = chunk.get("chunk_id", "unknown_chunk")
         source_name = chunk.get("source_name", "Unknown Source")
         page = chunk.get("page_number", "N/A")

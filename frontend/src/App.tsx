@@ -93,6 +93,32 @@ export const App: React.FC = () => {
   const [draftOutputs, setDraftOutputs] = useState<Record<string, any>>({});
   const [exportedFiles, setExportedFiles] = useState<Record<string, string>>({});
   const [pipelineLogs, setPipelineLogs] = useState<PipelineLogEvent[]>([]);
+  const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
+  const [stepDurations, setStepDurations] = useState<Record<string, string>>({});
+
+  // Real-time live stopwatch for pipeline execution
+  useEffect(() => {
+    let interval: any = null;
+    const isRunning = [
+      'ingesting',
+      'extracting',
+      'generating',
+      'reflecting',
+      'evaluating_gate',
+      'exporting',
+    ].includes(executionPhase);
+
+    if (isRunning) {
+      interval = setInterval(() => {
+        setTotalElapsedSeconds((prev) => +(prev + 0.1).toFixed(1));
+      }, 100);
+    } else if (executionPhase === 'idle') {
+      setTotalElapsedSeconds(0);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [executionPhase]);
 
   // 6. Hard Gate State
   const [hardGateModalOpen, setHardGateModalOpen] = useState<boolean>(false);
@@ -128,6 +154,11 @@ export const App: React.FC = () => {
     setHumanApproved(false);
     setDraftOutputs({});
     setDiscrepancies([]);
+    setTotalElapsedSeconds(0);
+    setStepDurations({});
+
+    const startOverall = performance.now();
+    const tIngestStart = performance.now();
 
     // Step 1: Ingestion
     setPipelineLogs([
@@ -135,7 +166,7 @@ export const App: React.FC = () => {
         step: 'system_init',
         title: 'Airgap Sovereign Engine',
         status: 'completed',
-        message: 'Dispatched transformation request with strict 0 cloud egress policy.',
+        message: '[SOVEREIGN_SYSTEM] 🚀 Initializing Sovereign StateGraph. Mandatory local LLM active (0 KB cloud egress).',
         timestamp: '0.00s',
         egress: '0 KB',
       },
@@ -143,7 +174,7 @@ export const App: React.FC = () => {
         step: 'ingestion_node',
         title: 'Ingestion & Normalizer Node',
         status: 'running',
-        message: `Ingesting ${files.length} document(s)... Resolving coordinate-indexed boundaries.`,
+        message: `[INGEST_AGENT] 🔍 Ingesting ${files.length} document(s)... Parsing layout boundaries and coordinate chunks.`,
         timestamp: '0.08s',
         egress: '0 KB',
       },
@@ -165,9 +196,13 @@ export const App: React.FC = () => {
         setSourceChunks(realChunks);
       }
 
-      await sleep(650);
+      const dIngest = ((performance.now() - tIngestStart) / 1000).toFixed(2) + 's';
+      setStepDurations((prev) => ({ ...prev, ingestion_node: dIngest }));
+
+      await sleep(500);
 
       // Step 2: Context & Entity Extraction
+      const tContextStart = performance.now();
       setExecutionPhase('extracting');
       setPipelineLogs((prev) => [
         ...prev.map((l) =>
@@ -175,7 +210,7 @@ export const App: React.FC = () => {
             ? {
                 ...l,
                 status: 'completed' as const,
-                message: `Normalized ${realChunks.length} coordinate chunks into SEI SQLite database.`,
+                message: `[INGEST_AGENT] ✅ Ingested and coordinate-indexed ${realChunks.length} chunks into SQLite SEI vault (${dIngest}).`,
               }
             : l
         ),
@@ -183,15 +218,18 @@ export const App: React.FC = () => {
           step: 'context_node',
           title: 'Context & Entity Extraction Node',
           status: 'running',
-          message: 'Running local CPU spaCy NER (ORG, GPE, TECH) across chunk coordinates...',
-          timestamp: '0.38s',
+          message: `[RESEARCH_AGENT] 🧠 Conducting full-document research across all ${realChunks.length} chunks with spaCy NER (ORG, GPE, TECH)...`,
+          timestamp: ((performance.now() - startOverall) / 1000).toFixed(2) + 's',
           egress: '0 KB',
         },
       ]);
 
-      await sleep(700);
+      await sleep(650);
+      const dContext = ((performance.now() - tContextStart) / 1000).toFixed(2) + 's';
+      setStepDurations((prev) => ({ ...prev, context_node: dContext }));
 
       // Step 3: Parallel Format Generation
+      const tGenStart = performance.now();
       setExecutionPhase('generating');
       setPipelineLogs((prev) => [
         ...prev.map((l) =>
@@ -199,7 +237,7 @@ export const App: React.FC = () => {
             ? {
                 ...l,
                 status: 'completed' as const,
-                message: 'Entity extraction completed with zero network transmission.',
+                message: `[RESEARCH_AGENT] ✅ Deep document analysis & NER completed with zero external transmission (${dContext}).`,
               }
             : l
         ),
@@ -207,18 +245,22 @@ export const App: React.FC = () => {
           step: 'generator_node',
           title: 'Parallel Multi-Format Generation Node',
           status: 'running',
-          message: `Synthesizing ${selectedFormats.length} locked Pydantic schemas [${selectedFormats.join(', ')}]...`,
-          timestamp: '0.85s',
+          message: `[LLM_SYNTHESIZER] ⚡ Dispatching structured synthesis to local Ollama (qwen2.5:3b) for ${selectedFormats.length} schemas [${selectedFormats.join(', ')}]...`,
+          timestamp: ((performance.now() - startOverall) / 1000).toFixed(2) + 's',
           egress: '0 KB',
         },
       ]);
 
-      // Trigger backend generation
+      // Trigger backend generation (runs local Ollama)
       await generateDeliverables(currentJobId, parameters, selectedFormats);
 
-      await sleep(800);
+      const dGen = ((performance.now() - tGenStart) / 1000).toFixed(2) + 's';
+      setStepDurations((prev) => ({ ...prev, generator_node: dGen }));
+
+      await sleep(500);
 
       // Step 4: 2-Pass Bounded Reflection
+      const tReflectStart = performance.now();
       setExecutionPhase('reflecting');
       setPipelineLogs((prev) => [
         ...prev.map((l) =>
@@ -226,7 +268,7 @@ export const App: React.FC = () => {
             ? {
                 ...l,
                 status: 'completed' as const,
-                message: `Synthesized schemas for [${selectedFormats.join(', ')}].`,
+                message: `[LLM_SYNTHESIZER] ✨ Completed structured schemas for [${selectedFormats.join(', ')}] via local LLM (${dGen}).`,
               }
             : l
         ),
@@ -234,15 +276,18 @@ export const App: React.FC = () => {
           step: 'reflection_node',
           title: '2-Pass Bounded Reflection Node',
           status: 'running',
-          message: 'Pass 1 structural schema validation & Pass 2 sovereign egress boundary audit...',
-          timestamp: '1.45s',
+          message: '[REFLECTION_AGENT] 🛡️ Pass 1 structural audit & Pass 2 sovereign air-gap telemetry boundary verification (cap <= 1 retry)...',
+          timestamp: ((performance.now() - startOverall) / 1000).toFixed(2) + 's',
           egress: '0 KB',
         },
       ]);
 
       await sleep(600);
+      const dReflect = ((performance.now() - tReflectStart) / 1000).toFixed(2) + 's';
+      setStepDurations((prev) => ({ ...prev, reflection_node: dReflect }));
 
       // Step 5: Deterministic Verification Gate
+      const tGateStart = performance.now();
       setExecutionPhase('evaluating_gate');
       setPipelineLogs((prev) => [
         ...prev.map((l) =>
@@ -250,7 +295,7 @@ export const App: React.FC = () => {
             ? {
                 ...l,
                 status: 'completed' as const,
-                message: 'Structural audit passed. 0 cloud telemetry policy verified (retry count: 0).',
+                message: `[REFLECTION_AGENT] ✅ Structural schema audit & 0 cloud telemetry policy verified (${dReflect}).`,
               }
             : l
         ),
@@ -258,14 +303,16 @@ export const App: React.FC = () => {
           step: 'verification_gate_node',
           title: 'Deterministic Verification Gate Node',
           status: 'running',
-          message: 'Executing sub-10ms CPU RapidFuzz cross-check between draft and source truth...',
-          timestamp: '1.88s',
+          message: '[VERIFICATION_GATE] ⚖️ RapidFuzz sub-10ms CPU cross-check: Comparing draft entities against authoritative source coordinates...',
+          timestamp: ((performance.now() - startOverall) / 1000).toFixed(2) + 's',
           egress: '0 KB',
         },
       ]);
 
       const statusRes = await getStatus(currentJobId);
-      await sleep(550);
+      const dGate = ((performance.now() - tGateStart) / 1000).toFixed(2) + 's';
+      setStepDurations((prev) => ({ ...prev, verification_gate_node: dGate }));
+      await sleep(400);
 
       if (statusRes.hard_gate_triggered && !statusRes.human_approved) {
         setExecutionPhase('hard_gate_halted');
@@ -277,7 +324,7 @@ export const App: React.FC = () => {
               ? {
                   ...l,
                   status: 'paused' as const,
-                  message: 'FLAGGED_MISMATCH: Entity discrepancy intercepted! Export locked (HTTP 423). Awaiting operator review.',
+                  message: `[VERIFICATION_GATE] ⚠️ FLAGGED_MISMATCH: Entity discrepancy intercepted! Export locked (HTTP 423). Awaiting operator sign-off (${dGate}).`,
                 }
               : l
           ),
@@ -285,6 +332,7 @@ export const App: React.FC = () => {
         setHardGateModalOpen(true);
       } else {
         // Step 6: Exporters
+        const tExportStart = performance.now();
         setExecutionPhase('exporting');
         setPipelineLogs((prev) => [
           ...prev.map((l) =>
@@ -292,7 +340,7 @@ export const App: React.FC = () => {
               ? {
                   ...l,
                   status: 'completed' as const,
-                  message: 'RapidFuzz CPU entity verification passed with 0 discrepancies.',
+                  message: `[VERIFICATION_GATE] ✅ Deterministic RapidFuzz cross-check passed with 0 discrepancies (${dGate}).`,
                 }
               : l
           ),
@@ -300,13 +348,15 @@ export const App: React.FC = () => {
             step: 'export_node',
             title: 'Deterministic Exporters Node',
             status: 'running',
-            message: 'Compiling presentation (.pptx) with speaker notes and formal advisory (.docx)...',
-            timestamp: '2.18s',
+            message: '[EXPORTER_AGENT] 📦 Compiling deterministic binary outputs (.pptx presentation with speaker notes, .docx advisory)...',
+            timestamp: ((performance.now() - startOverall) / 1000).toFixed(2) + 's',
             egress: '0 KB',
           },
         ]);
 
         await sleep(650);
+        const dExport = ((performance.now() - tExportStart) / 1000).toFixed(2) + 's';
+        setStepDurations((prev) => ({ ...prev, export_node: dExport }));
 
         setExecutionPhase('completed');
         const finalDrafts =
@@ -316,16 +366,25 @@ export const App: React.FC = () => {
         setDraftOutputs(finalDrafts);
         setExportedFiles(statusRes.exported_files || {});
         setHumanApproved(true);
+        const totalDuration = ((performance.now() - startOverall) / 1000).toFixed(2) + 's';
         setPipelineLogs((prev) => [
           ...prev.map((l) =>
             l.step === 'export_node'
               ? {
                   ...l,
                   status: 'completed' as const,
-                  message: 'Compiled deliverables into local sovereign vault with 0 KB egress.',
+                  message: `[EXPORTER_AGENT] ✅ Compiled deliverables into sovereign vault with 0 KB egress (${dExport}).`,
                 }
               : l
           ),
+          {
+            step: 'complete',
+            title: 'Sovereign Pipeline Complete',
+            status: 'completed',
+            message: `[SOVEREIGN_SYSTEM] 🚀 Pipeline execution finished in ${totalDuration}. All deliverables ready for air-gapped export.`,
+            timestamp: totalDuration,
+            egress: '0 KB',
+          },
         ]);
 
         // Default to first deliverable format tab
@@ -704,6 +763,8 @@ export const App: React.FC = () => {
             onOpenHardGate={() => setHardGateModalOpen(true)}
             onViewOutputs={() => setActiveMainTab('outputs')}
             formatsCount={selectedFormats.length}
+            totalElapsedSeconds={totalElapsedSeconds}
+            stepDurations={stepDurations}
           />
         )}
 

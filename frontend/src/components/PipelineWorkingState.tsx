@@ -12,6 +12,7 @@ import {
   Terminal,
   Activity,
   Check,
+  Clock,
 } from 'lucide-react';
 import { PipelineLogEvent, EntityDiscrepancy } from '../api/client';
 
@@ -32,6 +33,8 @@ export interface PipelineWorkingStateProps {
   onOpenHardGate: () => void;
   onViewOutputs: () => void;
   formatsCount: number;
+  totalElapsedSeconds?: number;
+  stepDurations?: Record<string, string>;
 }
 
 export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
@@ -42,8 +45,17 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
   onOpenHardGate,
   onViewOutputs,
   formatsCount,
+  totalElapsedSeconds = 0,
+  stepDurations = {},
 }) => {
   const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  const formatSeconds = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    const ms = Math.floor((sec % 1) * 10);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms}`;
+  };
 
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -138,6 +150,13 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
             <strong className="text-neutral-900">9.21 ms</strong>
           </div>
           <div className="px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-700">
+            <span className="text-neutral-400 block text-[9px] uppercase">Elapsed Time</span>
+            <strong className="text-neutral-900 flex items-center gap-1">
+              <Clock className="w-3 h-3 text-neutral-500" />
+              {formatSeconds(totalElapsedSeconds)}
+            </strong>
+          </div>
+          <div className="px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-700">
             <span className="text-neutral-400 block text-[9px] uppercase">Thread ID</span>
             <strong className="text-neutral-900 truncate max-w-[100px]">{jobId || 'idle'}</strong>
           </div>
@@ -201,6 +220,19 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
 
                 <div className="text-xs font-bold text-neutral-900">{node.title}</div>
                 <div className="text-[11px] text-neutral-500 mt-0.5 leading-snug">{node.desc}</div>
+
+                <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-[10px] font-mono text-neutral-500">
+                  <span className="text-neutral-400">Duration</span>
+                  <span className={`font-semibold px-1.5 py-0.5 rounded ${
+                    node.isRunning
+                      ? 'bg-neutral-900 text-white animate-pulse'
+                      : node.isCompleted
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-neutral-100 text-neutral-400'
+                  }`}>
+                    {stepDurations[node.id] || (node.isRunning ? 'Active...' : node.isCompleted ? 'Done' : '—')}
+                  </span>
+                </div>
               </div>
             );
           })}
