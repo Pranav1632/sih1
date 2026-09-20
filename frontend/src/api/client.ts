@@ -59,6 +59,15 @@ export interface GenerateResponse {
   status: string;
 }
 
+export interface PipelineLogEvent {
+  step: string;
+  title: string;
+  status: 'completed' | 'running' | 'paused' | 'queued' | 'error';
+  message: string;
+  timestamp: string;
+  egress?: string;
+}
+
 export interface StatusResponse {
   job_id?: string;
   status: string;
@@ -69,6 +78,7 @@ export interface StatusResponse {
   source_chunks?: SourceChunk[];
   exported_files?: Record<string, string>;
   claim_verifications?: any[];
+  logs?: PipelineLogEvent[];
   error_message?: string;
 }
 

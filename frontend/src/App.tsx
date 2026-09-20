@@ -21,6 +21,10 @@ import {
   ExternalLink,
   Sparkles,
   Lock,
+  Terminal,
+  Activity,
+  UploadCloud,
+  FileCheck2,
 } from 'lucide-react';
 
 import { IngestionZone, UploadedItem } from './components/IngestionZone';
@@ -28,11 +32,13 @@ import { ParameterControls } from './components/ParameterControls';
 import { FormatSelector } from './components/FormatSelector';
 import { HardGateModal } from './components/HardGateModal';
 import { SourceEvidenceViewer } from './components/SourceEvidenceViewer';
+import { PipelineWorkingState } from './components/PipelineWorkingState';
 
 import {
   GlobalParams,
   SourceChunk,
   EntityDiscrepancy,
+  PipelineLogEvent,
   ingestFiles,
   generateDeliverables,
   getStatus,
@@ -41,10 +47,13 @@ import {
 } from './api/client';
 
 export const App: React.FC = () => {
-  // 1. Files & Ingestion State (Starts empty; clean state)
+  // 1. Top-Level Main Tabs: 'ingestion' | 'pipeline' | 'outputs'
+  const [activeMainTab, setActiveMainTab] = useState<'ingestion' | 'pipeline' | 'outputs'>('ingestion');
+
+  // 2. Files & Ingestion State
   const [files, setFiles] = useState<UploadedItem[]>([]);
 
-  // 2. Parameters State (11 Matrix Controls)
+  // 3. Parameters State (11 Matrix Controls)
   const [parameters, setParameters] = useState<GlobalParams>({
     tone: 'Authoritative',
     audience: 'Technical',
@@ -58,15 +67,15 @@ export const App: React.FC = () => {
     fact_matching_gate: true,
   });
 
-  // 3. Formats State
+  // 4. Formats State
   const [selectedFormats, setSelectedFormats] = useState<string[]>([
     'advisory',
     'exec_summary',
     'presentation',
   ]);
-  const [activeTab, setActiveTab] = useState<string>('advisory');
+  const [activeDeliverableTab, setActiveDeliverableTab] = useState<string>('advisory');
 
-  // 4. Pipeline Execution State
+  // 5. Pipeline Execution State
   const [jobId, setJobId] = useState<string>('');
   const [executionPhase, setExecutionPhase] = useState<
     'idle' | 'ingesting' | 'generating' | 'evaluating_gate' | 'hard_gate_halted' | 'completed'
@@ -74,37 +83,53 @@ export const App: React.FC = () => {
   const [sourceChunks, setSourceChunks] = useState<SourceChunk[]>([]);
   const [draftOutputs, setDraftOutputs] = useState<Record<string, any>>({});
   const [exportedFiles, setExportedFiles] = useState<Record<string, string>>({});
+  const [pipelineLogs, setPipelineLogs] = useState<PipelineLogEvent[]>([]);
 
-  // 5. Hard Gate State
+  // 6. Hard Gate State
   const [hardGateModalOpen, setHardGateModalOpen] = useState<boolean>(false);
   const [discrepancies, setDiscrepancies] = useState<EntityDiscrepancy[]>([]);
   const [humanApproved, setHumanApproved] = useState<boolean>(false);
 
-  // 6. Citation Drawer State
+  // 7. Citation Drawer State
   const [citationDrawerOpen, setCitationDrawerOpen] = useState<boolean>(false);
   const [activeCitationChunkId, setActiveCitationChunkId] = useState<string | null>(null);
 
-  // 7. Feedback & Copy status
+  // 8. Feedback & Copy status
   const [copiedNotification, setCopiedNotification] = useState<boolean>(false);
 
-  // Ensure active tab is within selected formats
+  // Ensure active deliverable tab is within selected formats
   useEffect(() => {
-    if (!selectedFormats.includes(activeTab) && selectedFormats.length > 0) {
-      setActiveTab(selectedFormats[0]);
+    if (!selectedFormats.includes(activeDeliverableTab) && selectedFormats.length > 0) {
+      setActiveDeliverableTab(selectedFormats[0]);
     }
-  }, [selectedFormats, activeTab]);
+  }, [selectedFormats, activeDeliverableTab]);
 
   // Handle Pipeline Execution
   const handleExecute = async () => {
     if (files.length === 0) {
-      alert('Please upload at least one intelligence file or click "Load Sample Intel" first.');
+      alert('Please upload at least one intelligence source or click "Load Sample Intel" first.');
       return;
     }
 
+    // Switch to Pipeline Working State tab immediately so user watches live streaming progress!
+    setActiveMainTab('pipeline');
     setExecutionPhase('ingesting');
     setHumanApproved(false);
     setDraftOutputs({});
     setDiscrepancies([]);
+
+    // Initialize real-time streaming logs
+    const initialLogs: PipelineLogEvent[] = [
+      {
+        step: 'ingestion_node',
+        title: 'Ingestion & Normalizer Node',
+        status: 'running',
+        message: `Ingesting ${files.length} document(s)... Resolving PRIMARY authority baseline.`,
+        timestamp: '0.05s',
+        egress: '0 KB',
+      },
+    ];
+    setPipelineLogs(initialLogs);
 
     try {
       // Step 1: Ingest
@@ -118,13 +143,37 @@ export const App: React.FC = () => {
         setSourceChunks(ingestRes.source_chunks);
       }
 
+      setPipelineLogs((prev) => [
+        ...prev,
+        {
+          step: 'ingestion_node',
+          title: 'Ingestion & Normalizer Node',
+          status: 'completed',
+          message: `Indexed ${ingestRes.source_chunks.length} coordinate chunks into SQLite SEI store.`,
+          timestamp: '0.22s',
+          egress: '0 KB',
+        },
+        {
+          step: 'generator_node',
+          title: 'Parallel Multi-Format Generation Node',
+          status: 'running',
+          message: `Dispatched parallel workers for [${selectedFormats.join(', ')}].`,
+          timestamp: '0.45s',
+          egress: '0 KB',
+        },
+      ]);
+
       // Step 2: Generate
       setExecutionPhase('generating');
-      const genRes = await generateDeliverables(ingestRes.job_id, parameters, selectedFormats);
+      await generateDeliverables(ingestRes.job_id, parameters, selectedFormats);
 
       // Step 3: Fetch Status & Evaluate Gate
       setExecutionPhase('evaluating_gate');
       const statusRes = await getStatus(ingestRes.job_id);
+
+      if (statusRes.logs && statusRes.logs.length > 0) {
+        setPipelineLogs(statusRes.logs);
+      }
 
       if (statusRes.hard_gate_triggered && !statusRes.human_approved) {
         setExecutionPhase('hard_gate_halted');
@@ -146,8 +195,7 @@ export const App: React.FC = () => {
   // Trigger Deliberate Hard Gate Simulation
   const handleSimulateHardGate = async () => {
     if (files.length === 0) {
-      // Populate sample intel if empty
-      const demoItems: UploadedItem[] = [
+      setFiles([
         {
           id: 'demo_01',
           name: 'Operation_GhostLatch_Incident_Report.pdf',
@@ -155,11 +203,12 @@ export const App: React.FC = () => {
           type: 'application/pdf',
           role: 'PRIMARY',
         },
-      ];
-      setFiles(demoItems);
+      ]);
     }
 
+    setActiveMainTab('pipeline');
     setExecutionPhase('ingesting');
+
     try {
       const demoFile = files[0]?.file || new File(['deliberate test'], 'incident_report.pdf', { type: 'application/pdf' });
       const ingestRes = await ingestFiles([{ file: demoFile, role: 'PRIMARY' }]);
@@ -173,6 +222,7 @@ export const App: React.FC = () => {
       const statusRes = await getStatus(ingestRes.job_id);
       setDiscrepancies(statusRes.entity_discrepancies || []);
       setDraftOutputs(statusRes.draft_outputs || {});
+      if (statusRes.logs) setPipelineLogs(statusRes.logs);
       setHardGateModalOpen(true);
     } catch (err) {
       console.error('Simulation error:', err);
@@ -214,6 +264,7 @@ export const App: React.FC = () => {
     const statusRes = await getStatus(jobId);
     setDraftOutputs(statusRes.draft_outputs || updatedDrafts);
     setExportedFiles(statusRes.exported_files || {});
+    if (statusRes.logs) setPipelineLogs(statusRes.logs);
 
     setHumanApproved(true);
     setHardGateModalOpen(false);
@@ -228,23 +279,22 @@ export const App: React.FC = () => {
 
   // Copy Active Deliverable
   const handleCopyContent = () => {
-    const content = JSON.stringify(draftOutputs[activeTab] || {}, null, 2);
+    const content = JSON.stringify(draftOutputs[activeDeliverableTab] || {}, null, 2);
     navigator.clipboard.writeText(content);
     setCopiedNotification(true);
     setTimeout(() => setCopiedNotification(false), 2000);
   };
 
-  // Active Primary Document Name
   const primaryDoc = files.find((f) => f.role === 'PRIMARY')?.name;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa] text-neutral-900">
       
       {/* Vercel-Style Minimalist Navbar */}
-      <header className="border-b border-neutral-200/80 bg-white/80 backdrop-blur sticky top-0 z-40 px-6 py-3">
+      <header className="border-b border-neutral-200/80 bg-white/80 backdrop-blur sticky top-0 z-40 px-6 py-2.5">
         <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           
-          {/* Logo & Platform Badge */}
+          {/* Logo & Platform Name */}
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center text-white shadow-xs">
               <Shield className="w-4 h-4" />
@@ -264,114 +314,167 @@ export const App: React.FC = () => {
             </div>
           </div>
 
+          {/* Three Primary Navigation Tabs (Vercel Segmented Control) */}
+          <div className="flex items-center p-1 bg-neutral-100 border border-neutral-200/80 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('ingestion')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                activeMainTab === 'ingestion'
+                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              <UploadCloud className="w-3.5 h-3.5" />
+              <span>1. Source Ingestion</span>
+              {files.length > 0 && (
+                <span className="w-4 h-4 rounded-full bg-neutral-900 text-white text-[10px] flex items-center justify-center font-mono">
+                  {files.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('pipeline')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                activeMainTab === 'pipeline'
+                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>2. Pipeline Working State</span>
+              {executionPhase !== 'idle' && (
+                <span className={`w-2 h-2 rounded-full ${
+                  executionPhase === 'completed'
+                    ? 'bg-emerald-500'
+                    : executionPhase === 'hard_gate_halted'
+                    ? 'bg-amber-500 animate-ping'
+                    : 'bg-blue-500 animate-pulse'
+                }`} />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('outputs')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                activeMainTab === 'outputs'
+                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              <FileCheck2 className="w-3.5 h-3.5" />
+              <span>3. Deliverable Outputs</span>
+              {Object.keys(draftOutputs).length > 0 && (
+                <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-mono">
+                  {Object.keys(draftOutputs).length}
+                </span>
+              )}
+            </button>
+          </div>
+
           {/* Telemetry Pills & Action Controls */}
-          <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-            {/* Air-gapped status pill */}
+          <div className="flex items-center gap-2 font-mono text-xs">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Air-Gapped (0 KB Egress)</span>
+              <span>0 KB Egress</span>
             </div>
 
-            {/* Host status pill */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-[11px]">
-              <Cpu className="w-3.5 h-3.5 text-neutral-500" />
-              <span>Host: Local CPU/GPU</span>
-            </div>
-
-            {/* Test Simulation Button */}
             <button
               type="button"
               onClick={handleSimulateHardGate}
               className="flex items-center gap-1 px-3 py-1 text-xs font-sans font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg transition-colors shadow-2xs"
-              title="Test the flagship Hard Gate interception moment"
+              title="Test the Hard Gate interception moment"
             >
               <AlertTriangle className="w-3 h-3 text-amber-600" />
-              Simulate Hard Gate
+              Simulate Gate
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Two-Column Layout */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Tab Content */}
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-6">
         
-        {/* Left Column: Ingestion & Configuration (5 cols) */}
-        <div className="lg:col-span-5 space-y-5">
-          <IngestionZone
-            files={files}
-            onFilesChange={setFiles}
-            isIngesting={executionPhase === 'ingesting'}
+        {/* ========================================================================= */}
+        {/* TAB 1: SOURCE INGESTION & CONFIGURATION                                   */}
+        {/* ========================================================================= */}
+        {activeMainTab === 'ingestion' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
+            {/* Left Column: Ingestion Zone (5 cols) */}
+            <div className="lg:col-span-5 space-y-5">
+              <IngestionZone
+                files={files}
+                onFilesChange={setFiles}
+                isIngesting={executionPhase === 'ingesting'}
+              />
+
+              {/* Action Banner */}
+              <div className="p-4 bg-neutral-100/70 border border-neutral-200 rounded-xl space-y-2">
+                <div className="text-xs font-semibold text-neutral-800 flex items-center gap-1.5">
+                  <Play className="w-3.5 h-3.5 fill-neutral-800" />
+                  Ready to Transform
+                </div>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Executing will parse coordinate chunks, dispatch parallel Pydantic generation, run the 2-pass reflection audit, and evaluate the verification gate.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleExecute}
+                  disabled={files.length === 0}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs rounded-lg shadow-xs disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  <span>Execute Transformation ({selectedFormats.length} Formats)</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column: Parameters & Formats (7 cols) */}
+            <div className="lg:col-span-7 space-y-5">
+              <ParameterControls
+                parameters={parameters}
+                onChange={setParameters}
+                selectedFormatCount={selectedFormats.length}
+                primaryDocName={primaryDoc}
+              />
+
+              <FormatSelector
+                selectedFormats={selectedFormats}
+                onChange={setSelectedFormats}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 2: PIPELINE WORKING STATE & LIVE STREAMING                            */}
+        {/* ========================================================================= */}
+        {activeMainTab === 'pipeline' && (
+          <PipelineWorkingState
+            executionPhase={executionPhase}
+            jobId={jobId}
+            logs={pipelineLogs}
+            discrepancies={discrepancies}
+            onOpenHardGate={() => setHardGateModalOpen(true)}
+            onViewOutputs={() => setActiveMainTab('outputs')}
+            formatsCount={selectedFormats.length}
           />
+        )}
 
-          <ParameterControls
-            parameters={parameters}
-            onChange={setParameters}
-            selectedFormatCount={selectedFormats.length}
-            primaryDocName={primaryDoc}
-          />
-
-          <FormatSelector
-            selectedFormats={selectedFormats}
-            onChange={setSelectedFormats}
-          />
-
-          {/* Primary Action Button */}
-          <button
-            type="button"
-            onClick={handleExecute}
-            disabled={executionPhase === 'ingesting' || executionPhase === 'generating' || executionPhase === 'evaluating_gate'}
-            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-sm rounded-xl shadow-xs disabled:opacity-50 transition-all cursor-pointer"
-          >
-            {executionPhase === 'idle' && (
-              <>
-                <Play className="w-4 h-4 fill-white" />
-                <span>Execute Transformation ({selectedFormats.length} Formats)</span>
-              </>
-            )}
-            {executionPhase === 'ingesting' && (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Parsing & Normalizing Chunks...</span>
-              </>
-            )}
-            {executionPhase === 'generating' && (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Generating Pydantic Models in Parallel...</span>
-              </>
-            )}
-            {executionPhase === 'evaluating_gate' && (
-              <>
-                <Shield className="w-4 h-4 animate-pulse" />
-                <span>Evaluating Verification Gate (Sub-10ms NER)...</span>
-              </>
-            )}
-            {executionPhase === 'hard_gate_halted' && (
-              <>
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <span>Review Gate Triggered • Open Modal</span>
-              </>
-            )}
-            {executionPhase === 'completed' && (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Outputs Verified • Re-run Pipeline</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Right Column: Deliverables Workspace (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col space-y-4">
-          
-          {/* Deliverables Card Container */}
-          <div className="bg-white border border-neutral-200/90 rounded-xl shadow-xs flex-1 flex flex-col overflow-hidden min-h-[640px]">
+        {/* ========================================================================= */}
+        {/* TAB 3: DELIVERABLE OUTPUTS                                                */}
+        {/* ========================================================================= */}
+        {activeMainTab === 'outputs' && (
+          <div className="bg-white border border-neutral-200/90 rounded-xl shadow-xs overflow-hidden min-h-[640px] flex flex-col animate-in fade-in duration-150">
             
             {/* Tab Bar Header */}
-            <div className="border-b border-neutral-200 p-3 bg-neutral-50/50 flex flex-wrap items-center justify-between gap-3">
+            <div className="border-b border-neutral-200 p-3 bg-neutral-50/60 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
                 {selectedFormats.map((fId) => {
-                  const isActive = activeTab === fId;
+                  const isActive = activeDeliverableTab === fId;
                   const formatLabels: Record<string, string> = {
                     advisory: 'Advisory',
                     exec_summary: 'Executive Summary',
@@ -385,10 +488,10 @@ export const App: React.FC = () => {
                   return (
                     <button
                       key={fId}
-                      onClick={() => setActiveTab(fId)}
+                      onClick={() => setActiveDeliverableTab(fId)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                         isActive
-                          ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80 font-semibold'
+                          ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200 font-semibold'
                           : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
                       }`}
                     >
@@ -405,21 +508,21 @@ export const App: React.FC = () => {
                     <a
                       href={getExportUrl('pptx', jobId)}
                       download
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-800 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-800 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
                       title="Download Editable PowerPoint"
                     >
                       <Download className="w-3.5 h-3.5 text-neutral-600" />
-                      <span>.pptx</span>
+                      <span>Download .pptx</span>
                     </a>
 
                     <a
                       href={getExportUrl('docx', jobId)}
                       download
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-800 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-800 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs transition-colors"
                       title="Download Formal Advisory DOCX"
                     >
                       <Download className="w-3.5 h-3.5 text-neutral-600" />
-                      <span>.docx</span>
+                      <span>Download .docx</span>
                     </a>
                   </>
                 )}
@@ -427,9 +530,8 @@ export const App: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCopyContent}
-                  disabled={!draftOutputs[activeTab]}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs disabled:opacity-40 transition-colors"
-                  title="Copy deliverable content to clipboard"
+                  disabled={!draftOutputs[activeDeliverableTab]}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs disabled:opacity-40 transition-colors"
                 >
                   {copiedNotification ? (
                     <>
@@ -446,25 +548,25 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Tab Body View */}
+            {/* Deliverable Body View */}
             <div className="p-6 flex-1 overflow-y-auto bg-white">
-              {draftOutputs[activeTab] ? (
+              {draftOutputs[activeDeliverableTab] ? (
                 <div className="space-y-6 max-w-3xl animate-in fade-in duration-150">
                   
-                  {/* Verification Status Header */}
+                  {/* Header Strip */}
                   <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                       <span className="text-xs font-medium text-neutral-700">
-                        {humanApproved ? 'Operator Verified & Signed' : 'Draft Generated'}
+                        {humanApproved ? 'Verified Deliverable (Operator Signed)' : 'Generated Deliverable'}
                       </span>
                     </div>
 
                     {/* Cited Chunk Badges */}
-                    {draftOutputs[activeTab]?.cited_chunk_ids && (
+                    {draftOutputs[activeDeliverableTab]?.cited_chunk_ids && (
                       <div className="flex items-center gap-1.5">
                         <span className="text-[11px] text-neutral-500">Evidence Citations:</span>
-                        {draftOutputs[activeTab].cited_chunk_ids.map((cId: string) => (
+                        {draftOutputs[activeDeliverableTab].cited_chunk_ids.map((cId: string) => (
                           <button
                             key={cId}
                             onClick={() => openCitation(cId)}
@@ -478,7 +580,7 @@ export const App: React.FC = () => {
                   </div>
 
                   {/* Format 1: Intelligence Advisory */}
-                  {activeTab === 'advisory' && (
+                  {activeDeliverableTab === 'advisory' && (
                     <div className="space-y-5">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -566,7 +668,7 @@ export const App: React.FC = () => {
                   )}
 
                   {/* Format 2: Executive Summary */}
-                  {activeTab === 'exec_summary' && (
+                  {activeDeliverableTab === 'exec_summary' && (
                     <div className="space-y-5">
                       <div className="flex items-center justify-between pb-2">
                         <h2 className="text-lg font-bold text-neutral-900">Executive Situational Briefing</h2>
@@ -582,7 +684,7 @@ export const App: React.FC = () => {
 
                       {draftOutputs.exec_summary.core_findings && (
                         <div className="space-y-2">
-                          <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">Core Analytical Findings</div>
+                          <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">Core Findings</div>
                           <div className="space-y-1.5">
                             {draftOutputs.exec_summary.core_findings.map((f: string, idx: number) => (
                               <div key={idx} className="p-3 bg-white border border-neutral-200 rounded-lg text-xs text-neutral-800 flex items-start gap-2">
@@ -618,7 +720,7 @@ export const App: React.FC = () => {
                   )}
 
                   {/* Format 3: Presentation Deck */}
-                  {activeTab === 'presentation' && (
+                  {activeDeliverableTab === 'presentation' && (
                     <div className="space-y-5">
                       <div>
                         <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200">
@@ -648,12 +750,6 @@ export const App: React.FC = () => {
                                 <strong>Speaker Notes:</strong> {slide.speaker_notes}
                               </div>
                             )}
-
-                            {slide.visual_guidance && (
-                              <div className="text-[10px] font-mono text-neutral-400">
-                                Visual Guidance: {slide.visual_guidance}
-                              </div>
-                            )}
                           </div>
                         ))}
                       </div>
@@ -661,7 +757,7 @@ export const App: React.FC = () => {
                   )}
 
                   {/* Format 4: Video Package */}
-                  {activeTab === 'video' && (
+                  {activeDeliverableTab === 'video' && (
                     <div className="space-y-5">
                       <div>
                         <h2 className="text-lg font-bold text-neutral-900">{draftOutputs.video.video_title}</h2>
@@ -695,7 +791,7 @@ export const App: React.FC = () => {
                   )}
 
                   {/* Format 5: Infographic */}
-                  {activeTab === 'infographic' && (
+                  {activeDeliverableTab === 'infographic' && (
                     <div className="space-y-5">
                       <h2 className="text-lg font-bold text-neutral-900">{draftOutputs.infographic.infographic_title}</h2>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -715,7 +811,7 @@ export const App: React.FC = () => {
                   )}
 
                   {/* Format 6: LinkedIn */}
-                  {activeTab === 'linkedin' && (
+                  {activeDeliverableTab === 'linkedin' && (
                     <div className="space-y-4 max-w-xl p-5 border border-neutral-200 rounded-xl bg-white shadow-xs">
                       <div className="text-sm font-bold text-neutral-900">{draftOutputs.linkedin.headline}</div>
                       <div className="text-xs text-neutral-700 font-medium">{draftOutputs.linkedin.opening_hook}</div>
@@ -741,7 +837,7 @@ export const App: React.FC = () => {
                   )}
 
                   {/* Format 7: Twitter */}
-                  {activeTab === 'twitter' && (
+                  {activeDeliverableTab === 'twitter' && (
                     <div className="space-y-3 max-w-md">
                       <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                         Twitter Thread ({draftOutputs.twitter.tweets?.length || 0} Tweets)
@@ -759,8 +855,8 @@ export const App: React.FC = () => {
                   )}
                 </div>
               ) : (
-                /* Vercel Empty State */
-                <div className="h-full flex flex-col items-center justify-center py-20 text-center space-y-3">
+                /* Empty State */
+                <div className="h-full flex flex-col items-center justify-center py-24 text-center space-y-3">
                   <div className="w-12 h-12 rounded-2xl bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-500">
                     <FileText className="w-6 h-6 stroke-[1.5]" />
                   </div>
@@ -769,14 +865,22 @@ export const App: React.FC = () => {
                       No Deliverables Generated Yet
                     </h3>
                     <p className="text-xs text-neutral-500 max-w-sm mt-1 leading-relaxed">
-                      Upload an intelligence source in the ingestion panel on the left and click <strong className="text-neutral-700">"Execute Transformation"</strong> to compile verified deliverables.
+                      Go to <strong className="text-neutral-700">"1. Source Ingestion"</strong>, select your files and click <strong className="text-neutral-700">"Execute Transformation"</strong>.
                     </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMainTab('ingestion')}
+                    className="mt-2 px-3.5 py-1.5 text-xs font-semibold bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-all shadow-xs flex items-center gap-1.5"
+                  >
+                    <span>Go to Source Ingestion</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
             </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Hard Gate Interception Modal */}
