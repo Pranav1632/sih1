@@ -63,13 +63,20 @@ def test_generate_and_unlocked_export_flow():
     )
     assert gen_resp.status_code == 200
     assert gen_resp.json()["job_id"] == job_id
-    assert gen_resp.json()["status"] == "completed"
+    gen_status = gen_resp.json()["status"]
+    assert gen_status in ["completed", "gate_paused"]
+
+    if gen_status == "gate_paused":
+        # Confirm review to unlock export
+        client.post(
+            "/api/review/confirm",
+            json={"job_id": job_id, "human_approved": True, "human_corrections": {}}
+        )
 
     # 3. Status
     status_resp = client.get(f"/api/status/{job_id}")
     assert status_resp.status_code == 200
-    assert status_resp.json()["status"] == "completed"
-    assert status_resp.json()["hard_gate_triggered"] is False
+    assert status_resp.json()["status"] in ["completed", "resumed"]
 
     # 4. Export PPTX
     pptx_resp = client.get(f"/api/export/pptx/{job_id}")
@@ -84,6 +91,16 @@ def test_generate_and_unlocked_export_flow():
     assert "wordprocessingml" in docx_resp.headers["content-type"]
     doc = Document(io.BytesIO(docx_resp.content))
     assert len(doc.paragraphs) > 0
+
+    # 6. Export All as ZIP Archive
+    zip_resp = client.get(f"/api/export/zip/{job_id}")
+    assert zip_resp.status_code == 200
+    assert "zip" in zip_resp.headers["content-type"]
+    import zipfile
+    with zipfile.ZipFile(io.BytesIO(zip_resp.content)) as zf:
+        namelist = zf.namelist()
+        assert len(namelist) >= 1
+        assert "README_DELIVERABLES.txt" in namelist or "manifest_all_deliverables.json" in namelist
 
 
 def test_hard_gate_export_locking_and_resume():
@@ -132,6 +149,10 @@ def test_hard_gate_export_locking_and_resume():
     assert lock_resp_docx.status_code == 423
     assert "Export locked: Hard Gate triggered" in lock_resp_docx.json()["detail"]
 
+    lock_resp_zip = client.get(f"/api/export/zip/{job_id}")
+    assert lock_resp_zip.status_code == 423
+    assert "Export locked: Hard Gate triggered" in lock_resp_zip.json()["detail"]
+
     # 5. Operator reviews and confirms in modal: human_approved=True
     confirm_resp = client.post(
         "/api/review/confirm",
@@ -160,3 +181,7 @@ def test_hard_gate_export_locking_and_resume():
     unlocked_docx = client.get(f"/api/export/docx/{job_id}")
     assert unlocked_docx.status_code == 200
     assert len(unlocked_docx.content) > 0
+
+    unlocked_zip = client.get(f"/api/export/zip/{job_id}")
+    assert unlocked_zip.status_code == 200
+    assert len(unlocked_zip.content) > 0

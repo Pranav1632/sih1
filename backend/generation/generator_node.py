@@ -128,10 +128,14 @@ SCHEMA_EXAMPLES: Dict[str, Any] = {
         "cited_chunk_ids": ["doc_01_chunk_01"],
     },
     "twitter": {
-        "thread_hook": "Compelling first tweet that grabs attention.",
+        "thread_title": "Executive Threat Intelligence Briefing",
+        "total_tweets": 5,
         "tweets": [
-            {"tweet_number": 1, "content": "Tweet one content from document.", "hashtags": ["#Intel"]},
-            {"tweet_number": 2, "content": "Tweet two expanding on finding.", "hashtags": []},
+            {"tweet_number": 1, "content": "1/5 🚨 THREAT INTEL: Critical analysis from official source reports indicates targeted activities against monitored critical infrastructure.", "character_count": 142, "contains_media_placeholder": False},
+            {"tweet_number": 2, "content": "2/5 FORENSIC FINDINGS: Discrepancy audits and deep coordinate indexing reveal specific vectors across primary operational subsystems.", "character_count": 137, "contains_media_placeholder": False},
+            {"tweet_number": 3, "content": "3/5 MITIGATION DIRECTIVES: All host nodes must enforce strict baseline integrity checks and isolate unverified administrative tokens immediately.", "character_count": 147, "contains_media_placeholder": False},
+            {"tweet_number": 4, "content": "4/5 TECHNICAL COMPLIANCE: Inter-agency telemetry verification demonstrates zero cloud egress with all data bounded in local defense vaults.", "character_count": 141, "contains_media_placeholder": False},
+            {"tweet_number": 5, "content": "5/5 ACTION REQUIRED: Senior command personnel must review coordinate citations and approve emergency mitigation protocols. #Intel #Resilience", "character_count": 149, "contains_media_placeholder": False},
         ],
         "cited_chunk_ids": ["doc_01_chunk_01"],
     },
@@ -229,13 +233,37 @@ def synthesize_heuristic_draft(
         )
 
     elif format_key == "twitter":
-        t1_text = f"1/3 ANALYSIS: Intelligence assessment for {source_name}. Key findings derived from source."[:260]
-        t2_text = f"2/3 KEY FINDINGS: {grounded_sents[0] if grounded_sents else 'Grounded analysis confirms findings.'}"[:260]
-        t3_text = f"3/3 DIRECTIVES: {grounded_sents[1] if len(grounded_sents) > 1 else 'All operational directives verified.'}"[:260]
         tweets = [
-            TweetItem(tweet_number=1, content=t1_text, character_count=len(t1_text)),
-            TweetItem(tweet_number=2, content=t2_text, character_count=len(t2_text)),
-            TweetItem(tweet_number=3, content=t3_text, character_count=len(t3_text)),
+            TweetItem(
+                tweet_number=1,
+                content=f"1/6 🚨 INTEL ALERT: Authoritative assessment compiled from {source_name}. Critical infrastructure review active."[:275],
+                character_count=min(len(f"1/6 🚨 INTEL ALERT: Authoritative assessment compiled from {source_name}. Critical infrastructure review active."), 275),
+            ),
+            TweetItem(
+                tweet_number=2,
+                content=f"2/6 KEY FINDING: {grounded_sents[0] if grounded_sents else 'Grounded coordinate verification confirms operational parameters.'}"[:275],
+                character_count=min(len(f"2/6 KEY FINDING: {grounded_sents[0] if grounded_sents else 'Grounded coordinate verification confirms operational parameters.'}"), 275),
+            ),
+            TweetItem(
+                tweet_number=3,
+                content=f"3/6 FORENSICS: Identified key operational vector involving {first_entity}. Full coordinate citations anchored to vault chunks."[:275],
+                character_count=min(len(f"3/6 FORENSICS: Identified key operational vector involving {first_entity}. Full coordinate citations anchored to vault chunks."), 275),
+            ),
+            TweetItem(
+                tweet_number=4,
+                content=f"4/6 MITIGATION: {grounded_sents[1] if len(grounded_sents) > 1 else 'Enforce mandatory baseline audits across active control segments.'}"[:275],
+                character_count=min(len(f"4/6 MITIGATION: {grounded_sents[1] if len(grounded_sents) > 1 else 'Enforce mandatory baseline audits across active control segments.'}"), 275),
+            ),
+            TweetItem(
+                tweet_number=5,
+                content=f"5/6 RESILIENCE: {grounded_sents[2] if len(grounded_sents) > 2 else 'Zero cloud egress telemetry confirmed; all transformations verified locally.'}"[:275],
+                character_count=min(len(f"5/6 RESILIENCE: {grounded_sents[2] if len(grounded_sents) > 2 else 'Zero cloud egress telemetry confirmed; all transformations verified locally.'}"), 275),
+            ),
+            TweetItem(
+                tweet_number=6,
+                content=f"6/6 ACTION DIRECTIVE: Leadership sign-off required for technical controls. #CyberDefense #NationalSecurity #AirGapped #NTRO"[:275],
+                character_count=min(len(f"6/6 ACTION DIRECTIVE: Leadership sign-off required for technical controls. #CyberDefense #NationalSecurity #AirGapped #NTRO"), 275),
+            ),
         ]
         return TwitterThreadSchema(
             thread_title=f"Incident Briefing: {source_name}",
@@ -395,7 +423,7 @@ FORMAT_TOKEN_LIMITS = {
     "infographic": 900,
     "advisory": 1400,
     "presentation": 2048,
-    "twitter": 600,
+    "twitter": 1400,
     "video": 1200,
 }
 
@@ -570,7 +598,14 @@ def generate_single_format(
     if "cited_chunk_ids" in fallback_dict and not fallback_dict["cited_chunk_ids"]:
         fallback_dict["cited_chunk_ids"] = default_citations
     if job_id:
-        _st.push_event(job_id, "format_done", format=norm_key, chars=0, fallback=True)
+        try:
+            raw_fallback_text = fallback_model.model_dump_json(indent=2)
+            chunk_size = 80
+            for i in range(0, len(raw_fallback_text), chunk_size):
+                _st.push_token(job_id, norm_key, raw_fallback_text[i:i+chunk_size])
+            _st.push_event(job_id, "format_done", format=norm_key, chars=len(raw_fallback_text), fallback=True)
+        except Exception:
+            _st.push_event(job_id, "format_done", format=norm_key, chars=0, fallback=True)
     return fallback_dict
 
 

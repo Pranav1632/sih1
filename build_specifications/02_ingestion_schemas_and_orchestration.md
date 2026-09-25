@@ -191,9 +191,9 @@ class InfographicSchema(BaseModel):
     cited_chunk_ids: List[str]
 ```
 
-### 2.2 Deterministic Exporter Implementation
-1. **Presentation Exporter (`python-pptx`)**: Converts `PresentationSchema` into an editable PowerPoint file with title slide, bullet hierarchies, visual layouts, and speaker notes.
-2. **Formal Advisory Exporter (`python-docx`)**: Converts `AdvisorySchema` into an institutional Word document with headers, severity banners, threat tables, and footnote citations.
+### 2.2 Type-Safe Schema Compilation & Coordinate Attribution Mapping
+1. **Schema Validation & Hash Integrity**: Rather than emitting unstable free text, generators output strict Pydantic v2 JSON models. Each validated deliverable receives a computed SHA-256 fingerprint anchoring it to the exact source chunk IDs.
+2. **Coordinate Attribution Mapping**: Every generated claim maps to an explicit list of supporting `cited_chunk_ids`. These IDs resolve against the Source Evidence Index (SEI) to render interactive character-level highlights across page coordinates in the operator dashboard.
 
 ---
 

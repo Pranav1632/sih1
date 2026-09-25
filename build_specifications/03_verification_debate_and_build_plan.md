@@ -187,9 +187,9 @@ gantt
     section Stage 2: Ingestion & Core Graph
     PyMuPDF, faster-whisper & normalizer engine    :m3, after m2, 1d
     LangGraph StateGraph & parallel generators      :m4, after m3, 2d
-    section Stage 3: Verification & Exporters
+    section Stage 3: Verification & Security Gate
     Entity Fact-Check Hard Gate & RapidFuzz engine :m5, after m4, 1d
-    python-pptx & python-docx deterministic export  :m6, after m5, 1d
+    Forensic Citation Mapping & Coordinate Indexing:m6, after m5, 1d
     section Stage 4: UI & Submission Assets
     React dashboard with parameters & citation drawer:m7, after m6, 2d
     Record 2-minute demo video & finalize PPT deck  :m8, after m7, 1d
@@ -210,7 +210,7 @@ ollama pull qwen2.5:7b
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install --upgrade pip
-pip install fastapi uvicorn pydantic langgraph langchain-core langchain-ollama pymupdf python-docx faster-whisper spacy rapidfuzz networkx python-pptx reportlab
+pip install fastapi uvicorn pydantic langgraph langchain-core langchain-ollama pymupdf python-docx faster-whisper spacy rapidfuzz networkx sqlalchemy
 python -m spacy download en_core_web_sm
 ```
 
@@ -223,7 +223,7 @@ python -m spacy download en_core_web_sm
 - Implement `AgentState` in `backend/orchestration/state.py`.
 - Configure format prompts using `ChatOllama.with_structured_output()`.
 - Assemble `StateGraph` in `backend/orchestration/graph.py`.
-- Verify editable `.pptx` PowerPoint slide deck generation via `python-pptx`.
+- Verify multi-format parallel payload generation against Pydantic schema contracts.
 
 #### Phase 4: Entity Fact-Check Hard Gate & Citation Engine (Days 5–6)
 - Implement `fuzzy_matcher.py` connecting `spaCy` and `RapidFuzz`.

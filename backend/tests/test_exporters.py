@@ -102,3 +102,73 @@ def test_export_docx_from_fixture(tmp_path):
     ioc_table = doc.tables[2]
     table_text = " ".join(cell.text for row in ioc_table.rows for cell in row.cells)
     assert "Unpatched firmware vulnerability" in table_text
+
+
+def test_export_zip_archive(tmp_path):
+    """
+    Validates that a combined zip package contains all expected deliverables:
+    PPTX, DOCX, MD, TXT, JSON spec, JSON manifest, and README.
+    """
+    import zipfile
+    fixtures_path = os.path.join(os.path.dirname(__file__), "..", "..", "fixtures", "mock_draft_outputs.json")
+    with open(fixtures_path, "r", encoding="utf-8") as f:
+        drafts = json.load(f)
+
+    zip_file = str(tmp_path / "all_deliverables.zip")
+    temp_pptx = str(tmp_path / "temp.pptx")
+    temp_docx = str(tmp_path / "temp.docx")
+
+    pres_sample = {
+        "deck_title": "Operation GhostLatch Overview",
+        "target_audience": "Leadership",
+        "slides": [
+            {
+                "slide_number": 1,
+                "title": "Incident Containment",
+                "bullet_points": ["Substation controllers isolated", "Firmware patch deployed"],
+                "visual_guidance": "Single column card",
+                "speaker_notes": "Incident fully contained.",
+                "slide_reference_citations": ["doc_01_chunk_01"]
+            }
+        ]
+    }
+
+    export_pptx(pres_sample, temp_pptx)
+    export_docx(drafts["advisory"], temp_docx)
+
+    with zipfile.ZipFile(zip_file, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.write(temp_pptx, arcname="01_presentation_deck.pptx")
+        zf.write(temp_docx, arcname="02_intelligence_advisory.docx")
+        zf.writestr("03_executive_summary.md", "# Executive Summary\n\nSample content")
+        zf.writestr("04_linkedin_post.txt", "Headline\n\nSample LinkedIn post")
+        zf.writestr("05_twitter_thread.txt", "[Tweet 1]\nSample Tweet")
+        zf.writestr("06_video_script.md", "# Video Script\n\nScene 1")
+        zf.writestr("07_infographic_spec.json", json.dumps(drafts.get("infographic", {"chart": "timeline"})))
+        zf.writestr("manifest_all_deliverables.json", json.dumps({"job_id": "test_job"}))
+        zf.writestr("README_DELIVERABLES.txt", "SENTINEL-TRANSFORM SOVEREIGN DELIVERABLES BUNDLE")
+
+    assert os.path.exists(zip_file)
+    assert os.path.getsize(zip_file) > 0
+
+    with zipfile.ZipFile(zip_file, "r") as zf:
+        names = zf.namelist()
+        assert "01_presentation_deck.pptx" in names
+        assert "02_intelligence_advisory.docx" in names
+        assert "03_executive_summary.md" in names
+        assert "04_linkedin_post.txt" in names
+        assert "05_twitter_thread.txt" in names
+        assert "06_video_script.md" in names
+        assert "07_infographic_spec.json" in names
+        assert "manifest_all_deliverables.json" in names
+        assert "README_DELIVERABLES.txt" in names
+
+        # Verify PPTX is valid inside zip
+        with zf.open("01_presentation_deck.pptx") as f:
+            prs = Presentation(f)
+            assert len(prs.slides) >= 1
+
+        # Verify DOCX is valid inside zip
+        with zf.open("02_intelligence_advisory.docx") as f:
+            doc = Document(f)
+            assert len(doc.paragraphs) > 0
+

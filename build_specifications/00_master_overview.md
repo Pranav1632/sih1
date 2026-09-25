@@ -93,13 +93,13 @@ The system fulfills all seven deliverables explicitly enumerated in SIH Problem 
 
 | Format ID | Deliverable Name | Output Specification | Physical Artifact Form |
 |---|---|---|---|
-| `F1` | **LinkedIn Post** | Professional headline, narrative hook, key takeaways, strategic hashtags, call-to-action, evidence citations. | Formatted rich-text card with 1-click copy. |
-| `F2` | **Twitter/X Post & Thread** | Ordered multi-tweet sequence, character-count aware ($\le 280$ chars), numbering `(1/N)`, hashtags, source citations. | Thread preview card with per-tweet copy controls. |
-| `F3` | **Intelligence Advisory** | Structured national security advisory: Threat Overview, Affected Systems, Impact Assessment, IOCs, Remediation Steps. | Formal downloadable `.docx` / `.pdf` with institutional header. |
-| `F4` | **Executive Summary** | High-level situational briefing: Situation, Key Findings, Risk Assessment, Decisions Required, Source Traceability. | Executive briefing document card & printable summary. |
-| `F5` | **Presentation Deck** | Multi-slide structure: Slide titles, hierarchical bullet points, visual direction, and complete speaker notes. | Real, editable `.pptx` presentation file via `python-pptx`. |
-| `F6` | **Video Production Package** | Complete video package: Logline, target duration, scene-by-scene storyboard, narration script, subtitles, visual cues. | Comprehensive production brief document (`.docx` / `.pdf`). |
-| `F7` | **Infographic Content Spec** | Content hierarchy, core stats/callouts, layout block recommendations, chart type specifications, key messaging. | Structured visual layout brief card and JSON spec. |
+| `F1` | **LinkedIn Post** | Professional headline, narrative hook, key takeaways, strategic hashtags, call-to-action, evidence citations. | Structured Pydantic payload & formatted rich-text card with 1-click copy. |
+| `F2` | **Twitter/X Post & Thread** | Ordered multi-tweet sequence, character-count aware ($\le 280$ chars), numbering `(1/N)`, hashtags, source citations. | Structured Pydantic payload & thread preview card with per-tweet copy controls. |
+| `F3` | **Intelligence Advisory** | Structured national security advisory: Threat Overview, Affected Systems, Impact Assessment, IOCs, Remediation Steps. | Verified `AdvisorySchema` payload with cryptographic hash & forensic coordinate citations. |
+| `F4` | **Executive Summary** | High-level situational briefing: Situation, Key Findings, Risk Assessment, Decisions Required, Source Traceability. | Executive briefing payload & interactive dashboard summary card. |
+| `F5` | **Presentation Deck** | Multi-slide structure: Slide titles, hierarchical bullet points, visual direction, and complete speaker notes. | Type-safe `PresentationSchema` JSON model with per-slide speaker notes and citations. |
+| `F6` | **Video Production Package** | Complete video package: Logline, target duration, scene-by-scene storyboard, narration script, subtitles, visual cues. | Comprehensive `VideoPackageSchema` specification payload. |
+| `F7` | **Infographic Content Spec** | Content hierarchy, core stats/callouts, layout block recommendations, chart type specifications, key messaging. | Structured visual layout brief card and `InfographicSchema` payload. |
 
 ---
 
@@ -110,12 +110,12 @@ The engineering specifications are consolidated into four comprehensive master d
 - **[`00_master_overview.md`](./00_master_overview.md)**: (This file) Problem statement context, cardinal defense principles, scope, and index.
 - **[`01_architecture_tech_stack_and_ui.md`](./01_architecture_tech_stack_and_ui.md)** *(Combined 1 + 2 + 3)*:
   - System Architecture & End-to-End Multi-Agent Flow (Dual-Tier design)
-  - Technology Stack & Hardware Execution Policy (Windows 11 CPU $\rightarrow$ RTX 3050 portability, benchmarks, 0 KB egress)
+  - End-to-End Complex Technology Stack & Dependency Pipeline (First Step to Last Step)
   - Complete Parameter Matrix (all 11 controls mapped), Format-Aware Parameter Resolver, Dashboard UI Wireframe & Hard Gate Modal.
 - **[`02_ingestion_schemas_and_orchestration.md`](./02_ingestion_schemas_and_orchestration.md)** *(Combined 4 + 5 + 6)*:
   - Multimodal Ingestion Pipeline (PyMuPDF, docx, Tesseract OCR, faster-whisper)
   - Source Governance (Primary vs. Supporting authority weights) & Forensic Sentence-Level Claim Attribution (Gap 5 Solution)
-  - Complete Pydantic v2 Schemas for All 7 Formats & Deterministic File Exporters (`python-pptx` slides + speaker notes, `python-docx`)
+  - Complete Pydantic v2 Schemas for All 7 Formats & Type-Safe Output Enforcers
   - LangGraph State Machine Specification (`AgentState` TypedDict, StateGraph nodes, edges, bounded reflection, and checkpoint interrupts).
 - **[`03_verification_debate_and_build_plan.md`](./03_verification_debate_and_build_plan.md)** *(Combined 7 + 8 + 9)*:
   - Verification Gate & GraphRAG Entity Architecture (`spaCy` + `RapidFuzz` <50ms CPU code, `NetworkX` knowledge graph traversal)

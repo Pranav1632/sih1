@@ -295,20 +295,20 @@ flowchart TD
 
 ---
 
-### Component 8: Deterministic Multi-Format Exporters
+### Component 8: Sovereign Delivery, Type-Safe Payloads & Interactive Provenance Layer
 
 ```mermaid
 flowchart LR
-    VALIDATED_SCHEMAS["Approved Pydantic Schemas"] --> DISPATCH{"Exporter Dispatcher"}
+    VALIDATED_SCHEMAS["Approved Pydantic Schemas"] --> DISPATCH{"Delivery Engine Dispatch"}
     
-    DISPATCH -->|"PresentationSchema"| EXP_PPTX["python-pptx Exporter<br/>Outputs native .pptx slide deck with speaker notes"]
-    DISPATCH -->|"AdvisorySchema"| EXP_DOCX["python-docx Exporter<br/>Outputs formal Word advisory with institutional headers"]
-    DISPATCH -->|"ExecSummarySchema"| EXP_PDF["ReportLab PDF Exporter<br/>Outputs executive briefing PDF"]
-    DISPATCH -->|"Social & Video"| EXP_WEB["Interactive UI Cards<br/>1-click copy-ready formatted rich text"]
+    DISPATCH -->|"Advisory & Exec"| PAYLOAD_SEC["Verified Security Briefing Payloads<br/>Full IOC schema, mitigation hierarchy & hash chain"]
+    DISPATCH -->|"Presentation & Video"| PAYLOAD_PRES["Structured Deck & Video Specifications<br/>Per-slide speaker notes, scene storyboard & timestamps"]
+    DISPATCH -->|"Social Formats"| PAYLOAD_SOC["Length-Governed Micro-Posts<br/>Twitter thread (<=280 chars) & LinkedIn thought-leadership"]
+    DISPATCH -->|"Coordinate Citations"| DRAWER["Interactive PDF Citation Drawer<br/>Character-level coordinate yellow canvas overlay"]
 ```
 
-* **Responsibilities**: Compiles validated JSON data into real, editable Microsoft Office and PDF files.
-* **Key Feature**: Presentations exported via `python-pptx` include actual PowerPoint slide shapes, bullet hierarchies, visual layouts, and complete speaker notes referencing source document pages.
+* **Responsibilities**: Serves verified, type-safe deliverable payloads with forensic chunk attribution coordinates and one-click dissemination cards.
+* **Key Feature**: Claims link back directly to physical source coordinates `[doc_id, page_no, char_start, char_end]`, allowing operators to inspect the original evidence in a side-by-side split drawer with real-time character-level highlights.
 
 ---
 

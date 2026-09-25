@@ -3,6 +3,7 @@ import {
   Shield,
   Cpu,
   Download,
+  Archive,
   Copy,
   CheckCircle2,
   AlertTriangle,
@@ -26,11 +27,11 @@ import {
   UploadCloud,
   FileCheck2,
   History,
+  ChevronDown,
 } from 'lucide-react';
 
 import { IngestionZone, UploadedItem } from './components/IngestionZone';
-import { ParameterControls } from './components/ParameterControls';
-import { FormatSelector } from './components/FormatSelector';
+import { ParameterSection1, ParameterSection2, ParameterSection3 } from './components/ParameterControls';
 import { HardGateModal } from './components/HardGateModal';
 import { SourceEvidenceViewer } from './components/SourceEvidenceViewer';
 import { PipelineWorkingState } from './components/PipelineWorkingState';
@@ -194,19 +195,30 @@ export const App: React.FC = () => {
   // 2. Files & Ingestion State
   const [files, setFiles] = useState<UploadedItem[]>([]);
 
-  // 3. Parameters State (11 Matrix Controls)
+  // 3. Parameters State (11 Matrix Controls + Sections 1, 2, 3)
   const [parameters, setParameters] = useState<GlobalParams>({
     tone: 'Authoritative',
     audience: 'Technical',
     detail: 'Standard',
-    words: 400,
+    words: 500,
     objective: 'heuristic',
     language: 'English',
     formality: 9,
     keywords_must: [],
     add_on_instruction: '',
     fact_matching_gate: true,
+    model_selected: 'qwen2.5:3b',
+    custom_output_active: false,
+    format_customizations: {},
   });
+
+  // UI View Mode States
+  const [showIngestionZone, setShowIngestionZone] = useState<boolean>(true);
+  const [advisoryViewMode, setAdvisoryViewMode] = useState<'card' | 'text'>('card');
+  const [presentationViewMode, setPresentationViewMode] = useState<'card' | 'text'>('card');
+  const [copiedAdvisory, setCopiedAdvisory] = useState<boolean>(false);
+  const [copiedPresentation, setCopiedPresentation] = useState<boolean>(false);
+  const [copiedTwitter, setCopiedTwitter] = useState<boolean>(false);
 
   // 4. Formats State
   const [selectedFormats, setSelectedFormats] = useState<string[]>([
@@ -718,6 +730,60 @@ export const App: React.FC = () => {
     setCitationDrawerOpen(true);
   };
 
+  // Text extractors for DOCX & PPTX text representations
+  const getFullAdvisoryText = (adv: any) => {
+    if (!adv) return '';
+    return `INTELLIGENCE ADVISORY: ${adv.advisory_id || 'NTRO-ADV-2026-09'}
+TITLE: ${adv.title || 'Operational Intelligence Advisory'}
+SEVERITY: ${adv.severity_level || 'HIGH'}
+CITATIONS: ${(adv.cited_chunk_ids || []).join(', ')}
+
+================================================================================
+1. THREAT OVERVIEW
+================================================================================
+${adv.threat_overview || ''}
+
+================================================================================
+2. AFFECTED SYSTEMS & ASSETS
+================================================================================
+${(adv.affected_systems || []).map((s: string, i: number) => `  [${i + 1}] ${s}`).join('\n')}
+
+================================================================================
+3. INDICATORS OF COMPROMISE (IOCs)
+================================================================================
+${(adv.indicators_of_compromise || []).map((ioc: string, i: number) => `  • ${ioc}`).join('\n')}
+
+================================================================================
+4. RECOMMENDED MITIGATIONS & ACTION DIRECTIVES
+================================================================================
+${(adv.recommended_mitigations || []).map((m: string, i: number) => `  (${i + 1}) ${m}`).join('\n')}
+
+================================================================================
+5. COMPLIANCE & INTER-AGENCY GOVERNANCE
+================================================================================
+${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
+  };
+
+  const getFullPresentationText = (ppt: any) => {
+    if (!ppt) return '';
+    let out = `DECK TITLE: ${ppt.deck_title || 'Presentation'}\nTARGET AUDIENCE: ${ppt.target_audience || 'Leadership'}\n\n`;
+    (ppt.slides || []).forEach((s: any, idx: number) => {
+      out += `================================================================================\n`;
+      out += `SLIDE ${s.slide_number || idx + 1}: ${s.title || ''}\n`;
+      out += `================================================================================\n`;
+      out += `Visual Guidance: ${s.visual_guidance || 'Standard widescreen layout'}\n\n`;
+      out += `Bullet Points:\n`;
+      (s.bullet_points || []).forEach((bp: string) => {
+        out += `  • ${bp}\n`;
+      });
+      out += `\nSpoken Script / Speaker Notes:\n  "${s.speaker_notes || 'N/A'}"\n\n`;
+      if (s.slide_reference_citations?.length) {
+        out += `Citations: ${s.slide_reference_citations.join(', ')}\n\n`;
+      }
+    });
+    return out;
+  };
+
   // Copy Active Deliverable
   const handleCopyContent = () => {
     const content = JSON.stringify(draftOutputs[activeDeliverableTab] || {}, null, 2);
@@ -799,6 +865,12 @@ export const App: React.FC = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  // Download all generated deliverables in a single ZIP package
+  const handleDownloadAllZip = () => {
+    const activeJobId = jobId || 'job_c5d23a8b';
+    window.location.href = getExportUrl('zip', activeJobId);
   };
 
   const getFormatDownloadLabel = (tab: string) => {
@@ -954,58 +1026,82 @@ export const App: React.FC = () => {
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-6">
         
         {/* ========================================================================= */}
-        {/* TAB 1: SOURCE INGESTION & CONFIGURATION                                   */}
+        {/* TAB 1: SOURCE INGESTION & CONFIGURATION (WIREFRAME 1 LAYOUT)              */}
         {/* ========================================================================= */}
         {activeMainTab === 'ingestion' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
-            {/* Left Column: Ingestion Zone (5 cols) */}
-            <div className="lg:col-span-5 space-y-5">
-              <IngestionZone
-                files={files}
-                onFilesChange={setFiles}
-                isIngesting={executionPhase === 'ingesting'}
-              />
+          <div className="animate-in fade-in duration-150">
+            {/* Wireframe 1 Main Layout: Left (Section 1 + Source Ingestion), Right (Sections 2 & 3 + Execute) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              
+              {/* Left Column: Parameter Section 1 (Top) + Source Ingestion (Below) (Takes 6 cols) */}
+              <div className="lg:col-span-6 space-y-4">
+                <ParameterSection1
+                  parameters={parameters}
+                  onChange={setParameters}
+                  selectedFormats={selectedFormats}
+                  onFormatsChange={setSelectedFormats}
+                />
 
-              {/* Action Banner */}
-              <div className="p-4 bg-neutral-100/70 border border-neutral-200 rounded-xl space-y-2">
-                <div className="text-xs font-semibold text-neutral-800 flex items-center gap-1.5">
-                  <Play className="w-3.5 h-3.5 fill-neutral-800" />
-                  Ready to Transform
-                </div>
-                <p className="text-xs text-neutral-500 leading-relaxed">
-                  Executing will parse coordinate chunks, dispatch parallel Pydantic generation, run the 2-pass reflection audit, and evaluate the verification gate.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleExecute}
-                  disabled={files.length === 0}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs rounded-lg shadow-xs disabled:opacity-50 transition-all cursor-pointer"
-                >
-                  <span>Execute Transformation ({selectedFormats.length} Formats)</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                {/* Source Ingestion placed below Parameter Section 1 */}
+                <IngestionZone
+                  files={files}
+                  onFilesChange={setFiles}
+                  isIngesting={executionPhase === 'ingesting'}
+                />
               </div>
-            </div>
 
-            {/* Right Column: Parameters & Formats (7 cols) */}
-            <div className="lg:col-span-7 space-y-5">
-              <ParameterControls
-                parameters={parameters}
-                onChange={setParameters}
-                selectedFormatCount={selectedFormats.length}
-                primaryDocName={primaryDoc}
-              />
+              {/* Right Column: Parameter Section 2 (Top), Section 3 (Middle), Execute (Bottom) */}
+              <div className="lg:col-span-6 flex flex-col justify-between space-y-4">
+                {/* Parameter Section 2 */}
+                <ParameterSection2
+                  parameters={parameters}
+                  onChange={setParameters}
+                />
 
-              <FormatSelector
-                selectedFormats={selectedFormats}
-                onChange={setSelectedFormats}
-              />
+                {/* Parameter Section 3 */}
+                <ParameterSection3
+                  parameters={parameters}
+                  onChange={setParameters}
+                  selectedFormats={selectedFormats}
+                />
+
+                {/* Execute Button Card (Bottom Right of Wireframe 1) */}
+                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl text-white shadow-md flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-neutral-200 flex items-center gap-2">
+                      <Play className="w-3.5 h-3.5 fill-white" />
+                      <span>Ready to Execute Transformation</span>
+                      {parameters.custom_output_active && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold">
+                          Custom Spec Active
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-neutral-400">
+                      {files.length === 0
+                        ? 'Upload at least one primary source document to begin'
+                        : `Synthesizing ${selectedFormats.length} outputs with ${parameters.words}w budget per deliverable`}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleExecute}
+                    disabled={files.length === 0 || executionPhase === 'ingesting'}
+                    className="px-6 py-3 bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-xs rounded-xl shadow-xs disabled:opacity-40 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                  >
+                    <span>Execute</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: PIPELINE WORKING STATE & LIVE STREAMING                            */}
+        {/* TAB 2: PIPELINE WORKING STATE & LIVE STREAMING (WIREFRAME 2 LAYOUT)       */}
         {/* ========================================================================= */}
         {activeMainTab === 'pipeline' && (
           <PipelineWorkingState
@@ -1015,11 +1111,15 @@ export const App: React.FC = () => {
             discrepancies={discrepancies}
             onOpenHardGate={() => setHardGateModalOpen(true)}
             onViewOutputs={() => setActiveMainTab('outputs')}
+            onApproveHardGate={() => handleHardGateDecision('override')}
+            onRetryReflection={() => handleHardGateDecision('accept_correction')}
             formatsCount={selectedFormats.length}
             totalElapsedSeconds={totalElapsedSeconds}
             stepDurations={stepDurations}
             streamingText={streamingText}
             liveFormat={liveFormat}
+            activeFormats={selectedFormats}
+            draftOutputs={draftOutputs}
           />
         )}
 
@@ -1067,7 +1167,7 @@ export const App: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleDownloadActiveDeliverable}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs transition-all cursor-pointer"
                     title={`Download ${activeDeliverableTab} deliverable`}
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -1075,7 +1175,20 @@ export const App: React.FC = () => {
                   </button>
                 )}
 
-                {/* 2. Copy Button */}
+                {/* 2. Download All as ZIP Archive */}
+                {Object.keys(draftOutputs).length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadAllZip}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-xs transition-all cursor-pointer"
+                    title="Download all generated deliverables bundled in a single ZIP package (.zip)"
+                  >
+                    <Archive className="w-3.5 h-3.5" />
+                    <span>Download All (.zip)</span>
+                  </button>
+                )}
+
+                {/* 3. Copy Button */}
                 <button
                   type="button"
                   onClick={handleCopyContent}
@@ -1131,8 +1244,8 @@ export const App: React.FC = () => {
                   {/* Format 1: Intelligence Advisory */}
                   {activeDeliverableTab === 'advisory' && (
                     <div className="space-y-5">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-neutral-100 gap-2">
+                        <div className="flex items-center gap-2">
                           <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-900 text-white">
                             {draftOutputs.advisory.advisory_id || 'NTRO-ADV-2026-09'}
                           </span>
@@ -1144,73 +1257,125 @@ export const App: React.FC = () => {
                             SEVERITY: {draftOutputs.advisory.severity_level || 'HIGH'}
                           </span>
                         </div>
-                        <h2 className="text-lg font-bold text-neutral-900">
-                          {draftOutputs.advisory.title}
-                        </h2>
-                      </div>
 
-                      <div className="space-y-2">
-                        <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
-                          1. Threat Overview
-                        </h3>
-                        <p className="text-sm text-neutral-700 leading-relaxed bg-neutral-50/70 border border-neutral-200/80 p-3.5 rounded-xl">
-                          {draftOutputs.advisory.threat_overview}
-                        </p>
-                      </div>
-
-                      {draftOutputs.advisory.affected_systems && (
-                        <div className="space-y-2">
-                          <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
-                            2. Affected Systems & Assets
-                          </h3>
-                          <div className="flex flex-wrap gap-1.5">
-                            {draftOutputs.advisory.affected_systems.map((sys: string, idx: number) => (
-                              <span key={idx} className="text-xs px-2.5 py-1 bg-neutral-100 text-neutral-800 rounded-lg border border-neutral-200">
-                                {sys}
-                              </span>
-                            ))}
+                        {/* View Switcher: Card View vs Full Document Text View */}
+                        <div className="flex items-center gap-1.5">
+                          <div className="p-0.5 bg-neutral-100 border border-neutral-200 rounded-lg flex text-xs">
+                            <button
+                              type="button"
+                              onClick={() => setAdvisoryViewMode('card')}
+                              className={`px-2.5 py-1 rounded-md transition-all ${
+                                advisoryViewMode === 'card'
+                                  ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
+                                  : 'text-neutral-600 hover:text-neutral-900'
+                              }`}
+                            >
+                              Card View
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAdvisoryViewMode('text')}
+                              className={`px-2.5 py-1 rounded-md transition-all ${
+                                advisoryViewMode === 'text'
+                                  ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
+                                  : 'text-neutral-600 hover:text-neutral-900'
+                              }`}
+                            >
+                              Full Document Text View
+                            </button>
                           </div>
-                        </div>
-                      )}
 
-                      {draftOutputs.advisory.indicators_of_compromise && (
-                        <div className="space-y-2">
-                          <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
-                            3. Technical Indicators of Compromise (IOCs)
-                          </h3>
-                          <ul className="space-y-1.5 text-xs text-neutral-700 font-mono bg-neutral-50/70 border border-neutral-200/80 p-3.5 rounded-xl">
-                            {draftOutputs.advisory.indicators_of_compromise.map((ioc: string, idx: number) => (
-                              <li key={idx} className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                <span>{ioc}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          {advisoryViewMode === 'text' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(getFullAdvisoryText(draftOutputs.advisory));
+                                setCopiedAdvisory(true);
+                                setTimeout(() => setCopiedAdvisory(false), 2000);
+                              }}
+                              className="px-2.5 py-1 text-xs bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors flex items-center gap-1 shadow-2xs"
+                            >
+                              {copiedAdvisory ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              <span>{copiedAdvisory ? 'Copied' : 'Copy Doc Text'}</span>
+                            </button>
+                          )}
                         </div>
-                      )}
+                      </div>
 
-                      {draftOutputs.advisory.recommended_mitigations && (
-                        <div className="space-y-2">
-                          <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
-                            4. Recommended Mitigations & Action Directives
-                          </h3>
+                      <h2 className="text-lg font-bold text-neutral-900">
+                        {draftOutputs.advisory.title}
+                      </h2>
+
+                      {advisoryViewMode === 'text' ? (
+                        <div className="bg-[#0c0d0e] p-4 rounded-xl text-neutral-200 font-mono text-xs leading-relaxed whitespace-pre-wrap selection:bg-neutral-700 border border-neutral-800">
+                          {getFullAdvisoryText(draftOutputs.advisory)}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
                           <div className="space-y-2">
-                            {draftOutputs.advisory.recommended_mitigations.map((m: string, idx: number) => (
-                              <div key={idx} className="flex items-start gap-2.5 p-3 rounded-lg border border-neutral-200 bg-neutral-50/40 text-xs text-neutral-800">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                                <span className="leading-relaxed">{m}</span>
-                              </div>
-                            ))}
+                            <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                              1. Threat Overview
+                            </h3>
+                            <p className="text-sm text-neutral-700 leading-relaxed bg-neutral-50/70 border border-neutral-200/80 p-3.5 rounded-xl">
+                              {draftOutputs.advisory.threat_overview}
+                            </p>
                           </div>
-                        </div>
-                      )}
 
-                      {draftOutputs.advisory.compliance_and_governance && (
-                        <div className="space-y-1.5 p-3.5 bg-neutral-50 rounded-xl border border-neutral-200 text-xs">
-                          <div className="font-semibold text-neutral-900">Compliance & Governance Protocol:</div>
-                          <div className="text-neutral-700 font-mono text-[11px]">
-                            {draftOutputs.advisory.compliance_and_governance}
-                          </div>
+                          {draftOutputs.advisory.affected_systems && (
+                            <div className="space-y-2">
+                              <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                                2. Affected Systems & Assets
+                              </h3>
+                              <div className="flex flex-wrap gap-1.5">
+                                {draftOutputs.advisory.affected_systems.map((sys: string, idx: number) => (
+                                  <span key={idx} className="text-xs px-2.5 py-1 bg-neutral-100 text-neutral-800 rounded-lg border border-neutral-200">
+                                    {sys}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {draftOutputs.advisory.indicators_of_compromise && (
+                            <div className="space-y-2">
+                              <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                                3. Technical Indicators of Compromise (IOCs)
+                              </h3>
+                              <ul className="space-y-1.5 text-xs text-neutral-700 font-mono bg-neutral-50/70 border border-neutral-200/80 p-3.5 rounded-xl">
+                                {draftOutputs.advisory.indicators_of_compromise.map((ioc: string, idx: number) => (
+                                  <li key={idx} className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                    <span>{ioc}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {draftOutputs.advisory.recommended_mitigations && (
+                            <div className="space-y-2">
+                              <h3 className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                                4. Recommended Mitigations & Action Directives
+                              </h3>
+                              <div className="space-y-2">
+                                {draftOutputs.advisory.recommended_mitigations.map((m: string, idx: number) => (
+                                  <div key={idx} className="flex items-start gap-2.5 p-3 rounded-lg border border-neutral-200 bg-neutral-50/40 text-xs text-neutral-800">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                    <span className="leading-relaxed">{m}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {draftOutputs.advisory.compliance_and_governance && (
+                            <div className="space-y-1.5 p-3.5 bg-neutral-50 rounded-xl border border-neutral-200 text-xs">
+                              <div className="font-semibold text-neutral-900">Compliance & Governance Protocol:</div>
+                              <div className="text-neutral-700 font-mono text-[11px]">
+                                {draftOutputs.advisory.compliance_and_governance}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1271,37 +1436,87 @@ export const App: React.FC = () => {
                   {/* Format 3: Presentation Deck */}
                   {activeDeliverableTab === 'presentation' && (
                     <div className="space-y-5">
-                      <div>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-neutral-100 gap-2">
                         <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200">
                           Target: {draftOutputs.presentation.target_audience || 'Defense Leadership'}
                         </span>
-                        <h2 className="text-lg font-bold text-neutral-900 mt-1">
-                          {draftOutputs.presentation.deck_title}
-                        </h2>
-                      </div>
 
-                      <div className="space-y-4">
-                        {draftOutputs.presentation.slides?.map((slide: any, idx: number) => (
-                          <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white shadow-2xs space-y-3">
-                            <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
-                              <span className="text-xs font-bold font-mono text-neutral-500">SLIDE {slide.slide_number || idx + 1}</span>
-                              <span className="text-xs font-semibold text-neutral-900">{slide.title}</span>
-                            </div>
-
-                            <ul className="space-y-1 text-xs text-neutral-700 list-disc list-inside">
-                              {slide.bullet_points?.map((bp: string, bpIdx: number) => (
-                                <li key={bpIdx}>{bp}</li>
-                              ))}
-                            </ul>
-
-                            {slide.speaker_notes && (
-                              <div className="p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg text-[11px] text-neutral-600 italic">
-                                <strong>Speaker Notes:</strong> {slide.speaker_notes}
-                              </div>
-                            )}
+                        {/* View Switcher: Slide Deck View vs Full Slide Text View */}
+                        <div className="flex items-center gap-1.5">
+                          <div className="p-0.5 bg-neutral-100 border border-neutral-200 rounded-lg flex text-xs">
+                            <button
+                              type="button"
+                              onClick={() => setPresentationViewMode('card')}
+                              className={`px-2.5 py-1 rounded-md transition-all ${
+                                presentationViewMode === 'card'
+                                  ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
+                                  : 'text-neutral-600 hover:text-neutral-900'
+                              }`}
+                            >
+                              Slide Deck View
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPresentationViewMode('text')}
+                              className={`px-2.5 py-1 rounded-md transition-all ${
+                                presentationViewMode === 'text'
+                                  ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
+                                  : 'text-neutral-600 hover:text-neutral-900'
+                              }`}
+                            >
+                              Full Slide Text View
+                            </button>
                           </div>
-                        ))}
+
+                          {presentationViewMode === 'text' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(getFullPresentationText(draftOutputs.presentation));
+                                setCopiedPresentation(true);
+                                setTimeout(() => setCopiedPresentation(false), 2000);
+                              }}
+                              className="px-2.5 py-1 text-xs bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors flex items-center gap-1 shadow-2xs"
+                            >
+                              {copiedPresentation ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              <span>{copiedPresentation ? 'Copied' : 'Copy All Slide Text'}</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
+
+                      <h2 className="text-lg font-bold text-neutral-900">
+                        {draftOutputs.presentation.deck_title}
+                      </h2>
+
+                      {presentationViewMode === 'text' ? (
+                        <div className="bg-[#0c0d0e] p-4 rounded-xl text-neutral-200 font-mono text-xs leading-relaxed whitespace-pre-wrap selection:bg-neutral-700 border border-neutral-800">
+                          {getFullPresentationText(draftOutputs.presentation)}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {draftOutputs.presentation.slides?.map((slide: any, idx: number) => (
+                            <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white shadow-2xs space-y-3">
+                              <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                                <span className="text-xs font-bold font-mono text-neutral-500">SLIDE {slide.slide_number || idx + 1}</span>
+                                <span className="text-xs font-semibold text-neutral-900">{slide.title}</span>
+                              </div>
+
+                              <ul className="space-y-1 text-xs text-neutral-700 list-disc list-inside">
+                                {slide.bullet_points?.map((bp: string, bpIdx: number) => (
+                                  <li key={bpIdx}>{bp}</li>
+                                ))}
+                              </ul>
+
+                              {slide.speaker_notes && (
+                                <div className="p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg text-[11px] text-neutral-600 italic">
+                                  <strong>Speaker Notes:</strong> {slide.speaker_notes}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1387,19 +1602,58 @@ export const App: React.FC = () => {
 
                   {/* Format 7: Twitter */}
                   {activeDeliverableTab === 'twitter' && (
-                    <div className="space-y-3 max-w-md">
-                      <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                        Twitter Thread ({draftOutputs.twitter.tweets?.length || 0} Tweets)
-                      </div>
-                      {draftOutputs.twitter.tweets?.map((t: any, idx: number) => (
-                        <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white space-y-2 shadow-2xs">
-                          <div className="flex items-center justify-between text-[11px] text-neutral-400 font-mono">
-                            <span>Tweet {t.tweet_number || idx + 1}</span>
-                            <span>{t.character_count || t.content?.length} / 280 chars</span>
-                          </div>
-                          <p className="text-xs text-neutral-800 leading-relaxed">{t.content}</p>
+                    <div className="space-y-4 max-w-2xl">
+                      <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                        <div className="space-y-0.5">
+                          <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                            <Twitter className="w-4 h-4 text-blue-500" />
+                            <span>Twitter / X Intelligence Thread</span>
+                          </h2>
+                          <p className="text-xs text-neutral-500">
+                            {draftOutputs.twitter.tweets?.length || 0} Tweets • Strictly ≤280 chars per tweet • Fully Grounded
+                          </p>
                         </div>
-                      ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const fullThread = (draftOutputs.twitter.tweets || [])
+                              .map((t: any) => t.content)
+                              .join('\n\n---\n\n');
+                            navigator.clipboard.writeText(fullThread);
+                            setCopiedTwitter(true);
+                            setTimeout(() => setCopiedTwitter(false), 2000);
+                          }}
+                          className="px-3 py-1.5 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                          {copiedTwitter ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedTwitter ? 'Copied Thread' : 'Copy Entire Thread'}</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {draftOutputs.twitter.tweets?.map((t: any, idx: number) => {
+                          const charLen = t.content?.length || 0;
+                          return (
+                            <div
+                              key={idx}
+                              className="p-4 border border-neutral-200 rounded-xl bg-white shadow-2xs space-y-2 hover:border-neutral-300 transition-colors"
+                            >
+                              <div className="flex items-center justify-between text-xs pb-1 border-b border-neutral-100">
+                                <span className="font-bold font-mono text-neutral-900 flex items-center gap-1.5">
+                                  <Twitter className="w-3.5 h-3.5 text-blue-500" />
+                                  <span>Tweet {t.tweet_number || idx + 1} of {draftOutputs.twitter.tweets.length}</span>
+                                </span>
+                                <span className={`font-mono text-[11px] px-2 py-0.5 rounded font-semibold ${
+                                  charLen > 280 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-neutral-100 text-neutral-700'
+                                }`}>
+                                  {charLen} / 280 chars
+                                </span>
+                              </div>
+                              <p className="text-xs text-neutral-800 leading-relaxed font-sans">{t.content}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>

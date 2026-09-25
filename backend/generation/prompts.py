@@ -21,10 +21,10 @@ FORMAT_SYSTEM_PROMPTS: Dict[str, str] = {
 OBJECTIVE: Transform the source material into an authoritative, engaging, and professional post that stops the scroll, conveys key cyber-resilience lessons, and provides actionable takeaways with strategic hashtags.
 """,
 
-    "twitter": f"""You are a sovereign intelligence analyst creating an accurate, numbered Twitter/X thread.
+    "twitter": f"""You are a sovereign intelligence analyst creating an accurate, numbered, comprehensive Twitter/X thread.
 {BASE_GROUNDING_INSTRUCTIONS}
-OBJECTIVE: Transform the source material into a sequence of tweets.
-CONSTRAINT: Each tweet's `content` MUST strictly be 280 characters or fewer. Count your characters carefully. Include tweet numbering (e.g., 1/N, 2/N) and relevant hashtags.
+OBJECTIVE: Transform the source material into an extensive, highly informative sequence of 5 to 8 numbered tweets that thoroughly covers the background, technical analysis, IOCs, forensic findings, and recommended remediations.
+CONSTRAINT: Each tweet's `content` MUST strictly be 280 characters or fewer. Count your characters carefully. Include tweet numbering (e.g., 1/N, 2/N) and relevant technical hashtags. Provide comprehensive depth across the entire thread.
 """,
 
     "advisory": f"""You are a senior cyber threat intelligence lead at a national security agency (NTRO/CERT-In).
@@ -121,8 +121,24 @@ def format_parameters_context(parameters: Dict[str, Any]) -> str:
     if "target_audience" in parameters or "audience" in parameters:
         aud = parameters.get("target_audience") or parameters.get("audience")
         lines.append(f"Audience: {aud}")
-    if "detail_level" in parameters:
-        lines.append(f"Detail: {parameters['detail_level']}")
+    if "detail_level" in parameters or "detail" in parameters:
+        det = parameters.get("detail_level") or parameters.get("detail")
+        lines.append(f"Detail: {det}")
+    if "words" in parameters:
+        words_val = parameters["words"]
+        lines.append(
+            f"Target Word Budget: ~{words_val} words. (CRITICAL: This budget applies to this specific deliverable independently, not combined with other formats. Provide depth matching this volume.)"
+        )
+    if "language" in parameters:
+        lines.append(f"Output Language: {parameters['language']}")
+    if "keywords_must" in parameters and parameters["keywords_must"]:
+        kw_list = parameters["keywords_must"]
+        if isinstance(kw_list, list):
+            lines.append(f"Mandatory Keywords / IOCs: {', '.join(kw_list)}")
+        else:
+            lines.append(f"Mandatory Keywords / IOCs: {kw_list}")
+    if "add_on_instruction" in parameters and parameters["add_on_instruction"]:
+        lines.append(f"Special Operator Directive: {parameters['add_on_instruction']}")
 
     return " | ".join(lines) if lines else "Tone: Authoritative | Audience: Executive"
 
@@ -153,7 +169,7 @@ def build_prompt_for_format(
     evidence_block = format_source_chunks_context(chunks)
     params_block = format_parameters_context(parameters)
 
-    user_prompt = f"""PARAMETERS: {params_block}
+    user_prompt = f"""OPERATOR MISSION PARAMETERS: {params_block}
 
 SOURCE EVIDENCE (cite chunk_ids exactly as shown):
 {evidence_block}

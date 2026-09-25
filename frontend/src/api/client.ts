@@ -32,6 +32,19 @@ export interface EntityDiscrepancy {
   page_number?: number;
 }
 
+export interface FormatCustomSpec {
+  customized?: boolean;
+  slide_count?: number;
+  slide_density?: 'concise' | 'standard' | 'dense';
+  include_speaker_notes?: boolean;
+  theme?: string;
+  advisory_depth?: 'standard' | 'forensic';
+  thread_tweets_count?: number;
+  core_findings_count?: number;
+  scenes_count?: number;
+  words_override?: number;
+}
+
 export interface GlobalParams {
   tone: string;
   tone_prompt?: string;
@@ -47,6 +60,10 @@ export interface GlobalParams {
   add_on_instruction: string;
   fact_matching_gate: boolean;
   simulate_hard_gate?: boolean;
+  model_selected?: string;
+  url_scrape_input?: string;
+  custom_output_active?: boolean;
+  format_customizations?: Record<string, FormatCustomSpec>;
 }
 
 export interface IngestResponse {
@@ -187,28 +204,46 @@ export const MOCK_DRAFT_OUTPUTS: Record<string, any> = {
   },
   twitter: {
     thread_title: "Incident Brief: Substation Control Firmware Intrusion",
-    total_tweets: 3,
+    total_tweets: 6,
     tweets: [
       {
         tweet_number: 1,
-        content: "1/3 🚨 THREAT ADVISORY: Unauthorized access attempts detected against substation control software across 2 grid facilities via unpatched firmware vulnerability. Endpoints isolated. [Ref: Page 1]",
+        content: "1/6 🚨 THREAT ADVISORY: Unauthorized access attempts detected against substation control software across 2 grid facilities via unpatched firmware vulnerability. Endpoints isolated. [Ref: Page 1]",
         character_count: 187,
         contains_media_placeholder: false
       },
       {
         tweet_number: 2,
-        content: "2/3 Remediation update: Emergency firmware patches applied to all affected substations. Zero cascading impacts detected. Directorate confirms isolation complete. [Ref: Page 3]",
-        character_count: 177,
+        content: "2/6 🔍 FORENSIC AUDIT: Adversary probed SCADA telemetry ports using stealth persistence scripts disguised as maintenance tasks. Rapid memory scanning halted unauthorized code execution. [Ref: Page 2]",
+        character_count: 198,
         contains_media_placeholder: false
       },
       {
         tweet_number: 3,
-        content: "3/3 Recommendations for operators: (1) Audit scheduled task execution logs immediately. (2) Restrict firmware modification access to air-gapped engineering bastions.",
-        character_count: 172,
+        content: "3/6 🛡️ REMEDIATION: Emergency signed firmware updates deployed across all primary nodes. Grid operations continued with zero loss of life or electrical disruption. [Ref: Page 3]",
+        character_count: 178,
+        contains_media_placeholder: false
+      },
+      {
+        tweet_number: 4,
+        content: "4/6 🔒 ZERO-EGRESS ASSURANCE: All extraction & forensic audits verified locally via air-gapped models. No sensitive operational telemetry escaped boundary defenses. [Ref: Page 4]",
+        character_count: 179,
+        contains_media_placeholder: false
+      },
+      {
+        tweet_number: 5,
+        content: "5/6 📋 IMMEDIATE ACTIONS: (1) Force cryptographic token rotation across substation bastions. (2) Implement microsegmentation between OT and IT layers. [Ref: Page 5]",
+        character_count: 167,
+        contains_media_placeholder: false
+      },
+      {
+        tweet_number: 6,
+        content: "6/6 ⚠️ GOVERNANCE: Mandatory compliance filings initiated per NTRO/CERT-In guidelines. Technical teams must verify patch hashes before reconnection. #CyberSecurity #GridResilience #NTRO",
+        character_count: 184,
         contains_media_placeholder: false
       }
     ],
-    cited_chunk_ids: ["doc_01_chunk_01", "doc_01_chunk_02"]
+    cited_chunk_ids: ["doc_01_chunk_01", "doc_01_chunk_02", "doc_01_chunk_03"]
   },
   presentation: {
     deck_title: "Substation Firmware Intrusion: Technical Briefing & Remediation",
