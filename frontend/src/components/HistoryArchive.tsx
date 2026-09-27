@@ -355,11 +355,11 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
               {/* Session Header Strip */}
               <div
                 onClick={() => setExpandedSessionId(isExpanded ? null : item.id)}
-                className="p-4 bg-neutral-50/60 hover:bg-neutral-50 border-b border-neutral-200/80 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 select-none"
+                className="p-4 bg-neutral-50/60 hover:bg-orange-50/30 border-b border-neutral-200/80 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 select-none"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-neutral-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                    <FileText className="w-4 h-4 text-blue-400" />
+                  <div className="w-9 h-9 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    <FileText className="w-4 h-4 text-white" />
                   </div>
                   <div>
                     {/* INPUT: ONLY FILE NAME AS REQUESTED */}
@@ -375,7 +375,7 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                       <span>Thread: {item.jobId}</span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-neutral-400" />
+                        <Clock className="w-3 h-3 text-orange-600" />
                         {item.timestamp}
                       </span>
                       {item.totalDuration && (
@@ -406,7 +406,7 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                       e.stopPropagation();
                       onRestoreOutputs(item);
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg transition-all shadow-xs"
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-all shadow-xs cursor-pointer"
                     title="Load these deliverables into Main Tab 3 Outputs view"
                   >
                     <ArrowRight className="w-3 h-3" />
@@ -419,7 +419,7 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                       e.stopPropagation();
                       onDeleteSession(item.id);
                     }}
-                    className="p-1.5 text-neutral-400 hover:text-red-600 rounded-lg transition-colors"
+                    className="p-1.5 text-neutral-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
                     title="Delete record"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -441,10 +441,10 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                       <button
                         type="button"
                         onClick={() => setSubTab(item.id, 'outputs')}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
                           currentSubTab === 'outputs'
-                            ? 'bg-white text-neutral-900 shadow-xs'
-                            : 'text-neutral-500 hover:text-neutral-900'
+                            ? 'bg-white text-orange-600 shadow-xs font-bold'
+                            : 'text-neutral-500 hover:text-orange-600'
                         }`}
                       >
                         <Layers className="w-3.5 h-3.5" />
@@ -454,10 +454,10 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                       <button
                         type="button"
                         onClick={() => setSubTab(item.id, 'logs')}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
                           currentSubTab === 'logs'
-                            ? 'bg-white text-neutral-900 shadow-xs'
-                            : 'text-neutral-500 hover:text-neutral-900'
+                            ? 'bg-white text-orange-600 shadow-xs font-bold'
+                            : 'text-neutral-500 hover:text-orange-600'
                         }`}
                       >
                         <Activity className="w-3.5 h-3.5" />
@@ -467,10 +467,10 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                       <button
                         type="button"
                         onClick={() => setSubTab(item.id, 'chat')}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
                           currentSubTab === 'chat'
-                            ? 'bg-white text-neutral-900 shadow-xs'
-                            : 'text-neutral-500 hover:text-neutral-900'
+                            ? 'bg-white text-orange-600 shadow-xs font-bold'
+                            : 'text-neutral-500 hover:text-orange-600'
                         }`}
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
@@ -496,10 +496,10 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                               onClick={() =>
                                 setActiveOutputFormat((prev) => ({ ...prev, [item.id]: fk }))
                               }
-                              className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all ${
+                              className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                                 activeFormat === fk
-                                  ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
-                                  : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
+                                  ? 'bg-orange-600 text-white border-orange-600 shadow-xs'
+                                  : 'bg-white text-neutral-600 border-neutral-200 hover:bg-orange-50 hover:text-orange-700'
                               }`}
                             >
                               {fk.toUpperCase().replace('_', ' ')}
@@ -516,7 +516,7 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                               `${item.id}_${activeFormat}`
                             )
                           }
-                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg transition-all"
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-neutral-100 hover:bg-orange-50 hover:text-orange-700 text-neutral-800 rounded-lg transition-all cursor-pointer"
                         >
                           {copiedId === `${item.id}_${activeFormat}` ? (
                             <>
@@ -602,7 +602,7 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                               <div
                                 className={`p-3 rounded-xl text-xs max-w-[80%] leading-relaxed ${
                                   isUser
-                                    ? 'bg-neutral-900 text-white rounded-tr-none'
+                                    ? 'bg-orange-600 text-white rounded-tr-none'
                                     : 'bg-white border border-neutral-200 text-neutral-800 rounded-tl-none shadow-2xs'
                                 }`}
                               >
@@ -614,15 +614,15 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                                 <div>{msg.text}</div>
                                 <div
                                   className={`text-[9px] mt-1 font-mono ${
-                                    isUser ? 'text-neutral-400 text-right' : 'text-neutral-400'
+                                    isUser ? 'text-orange-200 text-right' : 'text-neutral-400'
                                   }`}
                                 >
                                   {msg.timestamp}
                                 </div>
                               </div>
                               {isUser && (
-                                <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                                  <User className="w-3.5 h-3.5" />
+                                <div className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                                  <User className="w-3.5 h-3.5 text-white" />
                                 </div>
                               )}
                             </div>
@@ -653,12 +653,12 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({
                             setUserInputs((prev) => ({ ...prev, [item.id]: e.target.value }))
                           }
                           disabled={isChatting[item.id]}
-                          className="flex-1 px-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all font-sans"
+                          className="flex-1 px-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-orange-500 focus:bg-white transition-all font-sans"
                         />
                         <button
                           type="submit"
                           disabled={!userInputs[item.id]?.trim() || isChatting[item.id]}
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white rounded-lg transition-all shadow-xs cursor-pointer"
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-orange-600 hover:bg-orange-700 disabled:opacity-40 text-white rounded-lg transition-all shadow-xs cursor-pointer"
                         >
                           <span>Send</span>
                           <Send className="w-3 h-3" />

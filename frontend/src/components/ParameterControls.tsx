@@ -109,13 +109,13 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-neutral-900 text-white rounded-xl shadow-xs">
+            <div className="p-2 bg-orange-600 text-white rounded-xl shadow-xs">
               <Sliders className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
                 Parameter Section 1: Core Controls
-                <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-neutral-100 text-neutral-700 border border-neutral-200 font-semibold">
+                <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-orange-50 text-orange-700 border border-orange-200 font-semibold">
                   Global Matrix
                 </span>
               </h2>
@@ -142,7 +142,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
           <div className="bg-neutral-50/80 border border-neutral-200/80 p-3.5 rounded-xl space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="font-semibold text-neutral-800">1. Synthesis Tone</span>
-              <span className="text-neutral-900 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-white border border-neutral-200">
+              <span className="text-orange-700 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-orange-50 border border-orange-200">
                 {parameters.tone}
               </span>
             </div>
@@ -152,10 +152,10 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
                   key={t}
                   type="button"
                   onClick={() => updateField('tone', t)}
-                  className={`py-1.5 text-xs rounded-lg transition-all font-medium ${
+                  className={`py-1.5 text-xs rounded-lg transition-all font-medium cursor-pointer ${
                     parameters.tone === t
-                      ? 'bg-neutral-900 text-white shadow-xs'
-                      : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+                      ? 'bg-orange-600 text-white shadow-xs font-semibold'
+                      : 'bg-white text-neutral-700 hover:bg-orange-50 hover:text-orange-700 border border-neutral-200'
                   }`}
                 >
                   {t}
@@ -168,7 +168,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
           <div className="bg-neutral-50/80 border border-neutral-200/80 p-3.5 rounded-xl space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="font-semibold text-neutral-800">2. Target Audience</span>
-              <span className="text-neutral-900 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-white border border-neutral-200">
+              <span className="text-orange-700 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-orange-50 border border-orange-200">
                 {parameters.audience}
               </span>
             </div>
@@ -178,10 +178,10 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
                   key={a}
                   type="button"
                   onClick={() => updateField('audience', a)}
-                  className={`py-1.5 text-xs rounded-lg transition-all font-medium ${
+                  className={`py-1.5 text-xs rounded-lg transition-all font-medium cursor-pointer ${
                     parameters.audience === a
-                      ? 'bg-neutral-900 text-white shadow-xs'
-                      : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+                      ? 'bg-orange-600 text-white shadow-xs font-semibold'
+                      : 'bg-white text-neutral-700 hover:bg-orange-50 hover:text-orange-700 border border-neutral-200'
                   }`}
                 >
                   {a}
@@ -194,7 +194,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
           <div className="bg-neutral-50/80 border border-neutral-200/80 p-3.5 rounded-xl space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="font-semibold text-neutral-800">3. Level of Detail</span>
-              <span className="text-neutral-900 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-white border border-neutral-200">
+              <span className="text-orange-700 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-orange-50 border border-orange-200">
                 {parameters.detail}
               </span>
             </div>
@@ -204,10 +204,10 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
                   key={d}
                   type="button"
                   onClick={() => updateField('detail', d)}
-                  className={`py-1.5 text-xs rounded-lg transition-all font-medium ${
+                  className={`py-1.5 text-xs rounded-lg transition-all font-medium cursor-pointer ${
                     parameters.detail === d
-                      ? 'bg-neutral-900 text-white shadow-xs'
-                      : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+                      ? 'bg-orange-600 text-white shadow-xs font-semibold'
+                      : 'bg-white text-neutral-700 hover:bg-orange-50 hover:text-orange-700 border border-neutral-200'
                   }`}
                 >
                   {d}
@@ -225,7 +225,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
             <div className="flex justify-between items-center text-xs mb-1">
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-neutral-900">4. Target Word Budget</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-900 text-white font-semibold">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-orange-600 text-white font-semibold">
                   PER OUTPUT
                 </span>
                 {parameters.custom_output_active && (
@@ -235,7 +235,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
                   </span>
                 )}
               </div>
-              <span className="text-neutral-900 font-mono text-sm font-bold">
+              <span className="text-orange-600 font-mono text-sm font-bold">
                 {parameters.words} words / deliverable
               </span>
             </div>
@@ -252,7 +252,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
               value={parameters.words || 400}
               disabled={parameters.custom_output_active}
               onChange={(e) => updateField('words', parseInt(e.target.value))}
-              className={`w-full accent-neutral-900 h-2 bg-neutral-200 rounded-lg cursor-pointer ${
+              className={`w-full accent-orange-600 h-2 bg-neutral-200 rounded-lg cursor-pointer ${
                 parameters.custom_output_active ? 'opacity-40 cursor-not-allowed' : ''
               }`}
             />
@@ -272,7 +272,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
                 <button
                   type="button"
                   onClick={handleResetToGlobal}
-                  className="px-2.5 py-1 text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
+                  className="px-2.5 py-1 text-xs font-semibold bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>Reset to Global Slider</span>
@@ -285,21 +285,21 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
           <div className="bg-neutral-50/80 border border-neutral-200/80 p-3.5 rounded-xl space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-neutral-800 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-neutral-600" />
+                <Layers className="w-3.5 h-3.5 text-orange-600" />
                 Target Deliverables ({selectedFormats.length} Active)
               </span>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => onFormatsChange(['advisory', 'exec_summary', 'presentation'])}
-                  className="text-[10px] px-2 py-0.5 bg-white border border-neutral-200 rounded text-neutral-700 hover:bg-neutral-100"
+                  className="text-[10px] px-2 py-0.5 bg-white border border-neutral-200 rounded text-neutral-700 hover:bg-orange-50 hover:text-orange-700 cursor-pointer"
                 >
                   Core 3
                 </button>
                 <button
                   type="button"
                   onClick={() => onFormatsChange(FORMAT_CATALOG.map((f) => f.id))}
-                  className="text-[10px] px-2 py-0.5 bg-white border border-neutral-200 rounded text-neutral-700 hover:bg-neutral-100"
+                  className="text-[10px] px-2 py-0.5 bg-white border border-neutral-200 rounded text-neutral-700 hover:bg-orange-50 hover:text-orange-700 cursor-pointer"
                 >
                   All 7
                 </button>
@@ -315,16 +315,16 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
                     key={fmt.id}
                     type="button"
                     onClick={() => toggleFormat(fmt.id)}
-                    className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all ${
+                    className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
-                        : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100/70'
+                        ? 'bg-orange-600 text-white border-orange-600 shadow-xs'
+                        : 'bg-white text-neutral-700 border-neutral-200 hover:bg-orange-50/50 hover:border-orange-200'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
                     <div className="truncate">
                       <div className="text-[11px] font-semibold truncate leading-tight">{fmt.name}</div>
-                      <div className={`text-[9px] font-mono truncate ${isSelected ? 'text-neutral-300' : 'text-neutral-400'}`}>
+                      <div className={`text-[9px] font-mono truncate ${isSelected ? 'text-orange-100' : 'text-neutral-400'}`}>
                         {fmt.badge}
                       </div>
                     </div>
@@ -399,7 +399,7 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
         title={isOpen ? 'Click to collapse Advanced Features' : 'Click to expand Advanced Features'}
       >
         <div className="flex items-center space-x-3 min-w-0">
-          <div className="p-2 bg-neutral-100 border border-neutral-200 rounded-xl text-neutral-900 shrink-0 group-hover:bg-neutral-200/70 transition-colors">
+          <div className="p-2 bg-orange-50 border border-orange-200 rounded-xl text-orange-700 shrink-0 group-hover:bg-orange-100 transition-colors">
             <Cpu className="w-4 h-4" />
           </div>
           <div className="min-w-0">
@@ -421,10 +421,10 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
         <div className="flex items-center gap-2 shrink-0 ml-2">
           {!isOpen && (
             <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px]">
-              <span className="px-2 py-0.5 rounded bg-neutral-100 border border-neutral-200 text-neutral-700 font-medium">
+              <span className="px-2 py-0.5 rounded bg-orange-50 border border-orange-200 text-orange-700 font-medium">
                 {parameters.model_selected || 'qwen2.5:3b'}
               </span>
-              <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 font-medium">
+              <span className="px-2 py-0.5 rounded bg-neutral-100 border border-neutral-200 text-neutral-700 font-medium">
                 {parameters.language || 'English'}
               </span>
               {parameters.keywords_must.length > 0 && (
@@ -436,8 +436,8 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
           )}
           <div className={`p-1.5 rounded-lg border transition-all ${
             isOpen
-              ? 'bg-neutral-900 text-white border-neutral-900'
-              : 'bg-white text-neutral-600 border-neutral-200 group-hover:bg-neutral-100 group-hover:text-neutral-900'
+              ? 'bg-orange-600 text-white border-orange-600'
+              : 'bg-white text-neutral-600 border-neutral-200 group-hover:bg-orange-50 group-hover:text-orange-700 group-hover:border-orange-200'
           }`}>
             {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </div>
@@ -456,7 +456,7 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
               <Cpu className="w-3.5 h-3.5 text-neutral-600" />
               Local Model Profile
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 bg-neutral-900 text-white rounded">
+            <span className="text-[10px] font-mono px-2 py-0.5 bg-orange-600 text-white rounded">
               0 KB Egress
             </span>
           </div>
@@ -518,13 +518,13 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             onKeyDown={handleKeyDownKeyword}
-            className="flex-1 text-xs bg-white border border-neutral-200 rounded-lg px-3 py-2 text-neutral-900 placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 shadow-2xs"
+            className="flex-1 text-xs bg-white border border-neutral-200 rounded-lg px-3 py-2 text-neutral-900 placeholder:text-neutral-400 focus:outline-hidden focus:border-orange-500 shadow-2xs"
           />
           <button
             type="button"
             onClick={handleAddKeyword}
             disabled={!keywordInput.trim()}
-            className="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1 shrink-0 shadow-xs cursor-pointer"
+            className="px-3.5 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1 shrink-0 shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add</span>
@@ -760,15 +760,15 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
               key={fmtId}
               type="button"
               onClick={() => setActiveCustomTab(fmtId)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 isCurrent
-                  ? 'bg-neutral-900 text-white shadow-xs'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-200/80'
+                  ? 'bg-orange-600 text-white shadow-xs'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-orange-50 hover:text-orange-700 border border-neutral-200/80'
               }`}
             >
               <span>{cat?.name || fmtId}</span>
               {isFmtCustom && (
-                <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-amber-400' : 'bg-neutral-900'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-amber-300' : 'bg-orange-600'}`} />
               )}
             </button>
           );
@@ -793,7 +793,7 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
             <div className="space-y-1">
               <div className="flex justify-between text-xs text-neutral-700">
                 <span>Total Slide Count:</span>
-                <strong className="font-mono">{currentSpec.slide_count || 5} Slides</strong>
+                <strong className="font-mono text-orange-600">{currentSpec.slide_count || 5} Slides</strong>
               </div>
               <input
                 type="range"
@@ -802,7 +802,7 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
                 step="1"
                 value={currentSpec.slide_count || 5}
                 onChange={(e) => updateSpec({ slide_count: parseInt(e.target.value) })}
-                className="w-full accent-neutral-900 cursor-pointer h-1.5 bg-neutral-200 rounded-lg"
+                className="w-full accent-orange-600 cursor-pointer h-1.5 bg-neutral-200 rounded-lg"
               />
               <div className="flex justify-between text-[10px] text-neutral-400 font-mono">
                 <span>3 (Exec Brief)</span>
@@ -827,15 +827,15 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
                     key={den.id}
                     type="button"
                     onClick={() => updateSpec({ slide_density: den.id as any })}
-                    className={`p-2.5 rounded-lg border text-left transition-all ${
+                    className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
                       (currentSpec.slide_density || 'standard') === den.id
-                        ? 'bg-neutral-900 text-white border-neutral-900'
-                        : 'bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-100'
+                        ? 'bg-orange-600 text-white border-orange-600 shadow-xs'
+                        : 'bg-white text-neutral-800 border-neutral-200 hover:bg-orange-50/50 hover:border-orange-200'
                     }`}
                   >
                     <div className="text-xs font-semibold">{den.label}</div>
                     <div className={`text-[10px] leading-tight mt-0.5 ${
-                      (currentSpec.slide_density || 'standard') === den.id ? 'text-neutral-300' : 'text-neutral-500'
+                      (currentSpec.slide_density || 'standard') === den.id ? 'text-orange-100' : 'text-neutral-500'
                     }`}>
                       {den.desc}
                     </div>
@@ -900,10 +900,10 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
                     key={d}
                     type="button"
                     onClick={() => updateSpec({ advisory_depth: d.toLowerCase() as any })}
-                    className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
+                    className={`px-3 py-1 text-xs rounded-lg font-medium transition-all cursor-pointer ${
                       (currentSpec.advisory_depth || 'standard') === d.toLowerCase()
-                        ? 'bg-neutral-900 text-white'
-                        : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100'
+                        ? 'bg-orange-600 text-white'
+                        : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-orange-50 hover:text-orange-700'
                     }`}
                   >
                     {d}
@@ -929,7 +929,7 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
             <div className="space-y-1">
               <div className="flex justify-between text-xs text-neutral-700">
                 <span>Thread Length:</span>
-                <strong className="font-mono">{currentSpec.thread_tweets_count || 6} Tweets</strong>
+                <strong className="font-mono text-orange-600">{currentSpec.thread_tweets_count || 6} Tweets</strong>
               </div>
               <input
                 type="range"
@@ -938,7 +938,7 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
                 step="1"
                 value={currentSpec.thread_tweets_count || 6}
                 onChange={(e) => updateSpec({ thread_tweets_count: parseInt(e.target.value) })}
-                className="w-full accent-neutral-900 cursor-pointer h-1.5 bg-neutral-200 rounded-lg"
+                className="w-full accent-orange-600 cursor-pointer h-1.5 bg-neutral-200 rounded-lg"
               />
               <div className="flex justify-between text-[10px] text-neutral-400 font-mono">
                 <span>3 (Brief Alert)</span>
@@ -969,7 +969,7 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
             <div className="space-y-1">
               <div className="flex justify-between text-xs text-neutral-700">
                 <span>Core Findings Count:</span>
-                <strong className="font-mono">{currentSpec.core_findings_count || 4} Findings</strong>
+                <strong className="font-mono text-orange-600">{currentSpec.core_findings_count || 4} Findings</strong>
               </div>
               <input
                 type="range"
@@ -978,7 +978,7 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
                 step="1"
                 value={currentSpec.core_findings_count || 4}
                 onChange={(e) => updateSpec({ core_findings_count: parseInt(e.target.value) })}
-                className="w-full accent-neutral-900 cursor-pointer h-1.5 bg-neutral-200 rounded-lg"
+                className="w-full accent-orange-600 cursor-pointer h-1.5 bg-neutral-200 rounded-lg"
               />
             </div>
           </div>
@@ -1002,9 +1002,9 @@ export const ParameterSection3: React.FC<ParameterSection3Props> = ({
           <button
             type="button"
             onClick={() => updateSpec({})}
-            className="px-3.5 py-1.5 text-xs font-semibold bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-all flex items-center gap-1.5 shadow-xs"
+            className="px-3.5 py-1.5 text-xs font-semibold bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
-            <Lock className="w-3 h-3 text-amber-300" />
+            <Lock className="w-3 h-3 text-white" />
             <span>Apply Custom Specification</span>
           </button>
         </div>

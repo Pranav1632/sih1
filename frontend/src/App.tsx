@@ -904,7 +904,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
           
           {/* Logo & Platform Name */}
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center text-white shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-orange-600 flex items-center justify-center text-white shadow-xs">
               <Shield className="w-4 h-4" />
             </div>
             <div>
@@ -912,7 +912,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                 <h1 className="text-sm font-bold tracking-tight text-neutral-900 font-sans">
                   Sentinel-Transform
                 </h1>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 font-medium">
                   v1.0 Sovereign
                 </span>
               </div>
@@ -922,21 +922,21 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
             </div>
           </div>
 
-          {/* Three Primary Navigation Tabs (Vercel Segmented Control) */}
+          {/* Three Primary Navigation Tabs (Segmented Control) */}
           <div className="flex items-center p-1 bg-neutral-100 border border-neutral-200/80 rounded-xl">
             <button
               type="button"
               onClick={() => setActiveMainTab('ingestion')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                 activeMainTab === 'ingestion'
-                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white text-orange-600 shadow-xs border border-orange-200 font-bold'
+                  : 'text-neutral-600 hover:text-orange-600'
               }`}
             >
               <UploadCloud className="w-3.5 h-3.5" />
               <span>1. Source Ingestion</span>
               {files.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-neutral-900 text-white text-[10px] flex items-center justify-center font-mono">
+                <span className="w-4 h-4 rounded-full bg-orange-600 text-white text-[10px] flex items-center justify-center font-mono font-bold">
                   {files.length}
                 </span>
               )}
@@ -947,8 +947,8 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
               onClick={() => setActiveMainTab('pipeline')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                 activeMainTab === 'pipeline'
-                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white text-orange-600 shadow-xs border border-orange-200 font-bold'
+                  : 'text-neutral-600 hover:text-orange-600'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
@@ -959,7 +959,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                     ? 'bg-emerald-500'
                     : executionPhase === 'hard_gate_halted'
                     ? 'bg-amber-500 animate-ping'
-                    : 'bg-blue-500 animate-pulse'
+                    : 'bg-orange-500 animate-pulse'
                 }`} />
               )}
             </button>
@@ -969,14 +969,14 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
               onClick={() => setActiveMainTab('outputs')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                 activeMainTab === 'outputs'
-                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white text-orange-600 shadow-xs border border-orange-200 font-bold'
+                  : 'text-neutral-600 hover:text-orange-600'
               }`}
             >
               <FileCheck2 className="w-3.5 h-3.5" />
               <span>3. Deliverable Outputs</span>
               {Object.keys(draftOutputs).length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-mono">
+                <span className="w-4 h-4 rounded-full bg-orange-600 text-white text-[10px] flex items-center justify-center font-mono font-bold">
                   {Object.keys(draftOutputs).length}
                 </span>
               )}
@@ -987,14 +987,14 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
               onClick={() => setActiveMainTab('history')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                 activeMainTab === 'history'
-                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white text-orange-600 shadow-xs border border-orange-200 font-bold'
+                  : 'text-neutral-600 hover:text-orange-600'
               }`}
             >
-              <History className="w-3.5 h-3.5 text-blue-600" />
+              <History className="w-3.5 h-3.5 text-orange-600" />
               <span>4. History & Archive</span>
               {history.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-mono">
+                <span className="w-4 h-4 rounded-full bg-orange-600 text-white text-[10px] flex items-center justify-center font-mono font-bold">
                   {history.length}
                 </span>
               )}
@@ -1060,18 +1060,18 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
             />
 
             {/* 5. Execution Action Card (Aligned Below At Last) */}
-            <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-2xl text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-5 bg-white border-2 border-orange-400 rounded-2xl text-neutral-900 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left">
-                <div className="text-sm font-bold text-neutral-100 flex items-center justify-center sm:justify-start gap-2">
-                  <Play className="w-4 h-4 fill-white" />
+                <div className="text-sm font-bold text-neutral-900 flex items-center justify-center sm:justify-start gap-2">
+                  <Play className="w-4 h-4 fill-orange-600 text-orange-600" />
                   <span>Ready to Execute Transformation</span>
                   {parameters.custom_output_active && (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold">
                       Custom Spec Active
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-neutral-400">
+                <p className="text-xs text-neutral-500">
                   {files.length === 0
                     ? 'Upload at least one primary source document to begin'
                     : `Synthesizing ${selectedFormats.length} outputs with ${parameters.words}w budget per deliverable`}
@@ -1082,7 +1082,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                 type="button"
                 onClick={handleExecute}
                 disabled={files.length === 0 || executionPhase === 'ingesting'}
-                className="px-8 py-3.5 bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-sm rounded-xl shadow-md disabled:opacity-40 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                className="px-8 py-3.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm rounded-xl shadow-md disabled:opacity-40 transition-all flex items-center gap-2 cursor-pointer shrink-0"
               >
                 <span>Execute Transformation</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1142,8 +1142,8 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                       onClick={() => setActiveDeliverableTab(fId)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                         isActive
-                          ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200 font-semibold'
-                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                          ? 'bg-orange-600 text-white shadow-xs font-semibold'
+                          : 'text-neutral-600 hover:text-orange-600 hover:bg-orange-50/50'
                       }`}
                     >
                       {formatLabels[fId] || fId}
@@ -1159,7 +1159,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                   <button
                     type="button"
                     onClick={handleDownloadActiveDeliverable}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg shadow-xs transition-all cursor-pointer"
                     title={`Download ${activeDeliverableTab} deliverable`}
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -1172,7 +1172,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                   <button
                     type="button"
                     onClick={handleDownloadAllZip}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-xs transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-950 bg-orange-100 hover:bg-orange-200 border border-orange-300 rounded-lg shadow-xs transition-all cursor-pointer"
                     title="Download all generated deliverables bundled in a single ZIP package (.zip)"
                   >
                     <Archive className="w-3.5 h-3.5" />
@@ -1185,7 +1185,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                   type="button"
                   onClick={handleCopyContent}
                   disabled={!draftOutputs[activeDeliverableTab]}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg shadow-2xs disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white hover:bg-orange-50 hover:text-orange-700 border border-neutral-200 rounded-lg shadow-2xs disabled:opacity-40 transition-colors"
                 >
                   {copiedNotification ? (
                     <>
@@ -1232,7 +1232,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                     <div className="space-y-5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-neutral-100 gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-900 text-white">
+                          <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-orange-600 text-white">
                             {draftOutputs.advisory.advisory_id || 'NTRO-ADV-2026-09'}
                           </span>
                           <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${
@@ -1252,8 +1252,8 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                               onClick={() => setAdvisoryViewMode('card')}
                               className={`px-2.5 py-1 rounded-md transition-all ${
                                 advisoryViewMode === 'card'
-                                  ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
-                                  : 'text-neutral-600 hover:text-neutral-900'
+                                  ? 'bg-white text-orange-600 shadow-2xs font-semibold'
+                                  : 'text-neutral-600 hover:text-orange-600'
                               }`}
                             >
                               Card View
@@ -1263,8 +1263,8 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                               onClick={() => setAdvisoryViewMode('text')}
                               className={`px-2.5 py-1 rounded-md transition-all ${
                                 advisoryViewMode === 'text'
-                                  ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
-                                  : 'text-neutral-600 hover:text-neutral-900'
+                                  ? 'bg-white text-orange-600 shadow-2xs font-semibold'
+                                  : 'text-neutral-600 hover:text-orange-600'
                               }`}
                             >
                               Full Document Text View
@@ -1279,9 +1279,9 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                                 setCopiedAdvisory(true);
                                 setTimeout(() => setCopiedAdvisory(false), 2000);
                               }}
-                              className="px-2.5 py-1 text-xs bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors flex items-center gap-1 shadow-2xs"
+                              className="px-2.5 py-1 text-xs bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
                             >
-                              {copiedAdvisory ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              {copiedAdvisory ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
                               <span>{copiedAdvisory ? 'Copied' : 'Copy Doc Text'}</span>
                             </button>
                           )}
@@ -1435,8 +1435,8 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                               onClick={() => setPresentationViewMode('card')}
                               className={`px-2.5 py-1 rounded-md transition-all ${
                                 presentationViewMode === 'card'
-                                  ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
-                                  : 'text-neutral-600 hover:text-neutral-900'
+                                  ? 'bg-white text-orange-600 shadow-2xs font-semibold'
+                                  : 'text-neutral-600 hover:text-orange-600'
                               }`}
                             >
                               Slide Deck View
@@ -1446,8 +1446,8 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                               onClick={() => setPresentationViewMode('text')}
                               className={`px-2.5 py-1 rounded-md transition-all ${
                                 presentationViewMode === 'text'
-                                  ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
-                                  : 'text-neutral-600 hover:text-neutral-900'
+                                  ? 'bg-white text-orange-600 shadow-2xs font-semibold'
+                                  : 'text-neutral-600 hover:text-orange-600'
                               }`}
                             >
                               Full Slide Text View
@@ -1462,9 +1462,9 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                                 setCopiedPresentation(true);
                                 setTimeout(() => setCopiedPresentation(false), 2000);
                               }}
-                              className="px-2.5 py-1 text-xs bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors flex items-center gap-1 shadow-2xs"
+                              className="px-2.5 py-1 text-xs bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
                             >
-                              {copiedPresentation ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              {copiedPresentation ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
                               <span>{copiedPresentation ? 'Copied' : 'Copy All Slide Text'}</span>
                             </button>
                           )}
@@ -1609,9 +1609,9 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                             setCopiedTwitter(true);
                             setTimeout(() => setCopiedTwitter(false), 2000);
                           }}
-                          className="px-3 py-1.5 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                          className="px-3 py-1.5 text-xs font-semibold bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
                         >
-                          {copiedTwitter ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          {copiedTwitter ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
                           <span>{copiedTwitter ? 'Copied Thread' : 'Copy Entire Thread'}</span>
                         </button>
                       </div>
@@ -1660,7 +1660,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                   <button
                     type="button"
                     onClick={() => setActiveMainTab('ingestion')}
-                    className="mt-2 px-3.5 py-1.5 text-xs font-semibold bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-all shadow-xs flex items-center gap-1.5"
+                    className="mt-2 px-3.5 py-1.5 text-xs font-semibold bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <span>Go to Source Ingestion</span>
                     <ArrowRight className="w-3.5 h-3.5" />

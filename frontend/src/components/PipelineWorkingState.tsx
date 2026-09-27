@@ -195,7 +195,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
       {/* ========================================================================= */}
       <div className="bg-white border border-neutral-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-xl bg-neutral-900 text-white flex items-center justify-center shadow-xs">
+          <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center shadow-xs">
             <Activity className="w-4 h-4" />
           </div>
           <div>
@@ -210,7 +210,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                   ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
                   : executionPhase === 'idle'
                   ? 'bg-neutral-100 text-neutral-600 border-neutral-200'
-                  : 'bg-neutral-900 text-white border-neutral-900'
+                  : 'bg-orange-600 text-white border-orange-600'
               }`}>
                 {executionPhase.toUpperCase().replace('_', ' ')}
               </span>
@@ -232,7 +232,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
             <strong className="text-neutral-900 font-bold">9.21 ms</strong>
           </div>
           <div className="px-3 py-1 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-700 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-neutral-500" />
+            <Clock className="w-3.5 h-3.5 text-orange-600" />
             <strong className="text-neutral-900 font-bold">{formatSeconds(totalElapsedSeconds)}</strong>
           </div>
           <div className="px-3 py-1 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-700">
@@ -256,7 +256,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
           <div className="bg-white border border-neutral-200 rounded-2xl p-4 shadow-xs">
             <div className="flex items-center justify-between mb-3 pb-2 border-b border-neutral-100">
               <div className="flex items-center gap-2">
-                <GitBranch className="w-4 h-4 text-neutral-700" />
+                <GitBranch className="w-4 h-4 text-orange-600" />
                 <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
                   Pipeline Execution Graph
                 </h3>
@@ -267,10 +267,10 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                 <button
                   type="button"
                   onClick={() => setPipelineGraphView('vertical_mermaid')}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                     pipelineGraphView === 'vertical_mermaid'
-                      ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
-                      : 'text-neutral-600 hover:text-neutral-900'
+                      ? 'bg-white text-orange-600 shadow-2xs font-semibold'
+                      : 'text-neutral-600 hover:text-orange-600'
                   }`}
                 >
                   Vertical Mermaid Pipeline
@@ -278,10 +278,10 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                 <button
                   type="button"
                   onClick={() => setPipelineGraphView('grid')}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                     pipelineGraphView === 'grid'
-                      ? 'bg-white text-neutral-900 shadow-2xs font-semibold'
-                      : 'text-neutral-600 hover:text-neutral-900'
+                      ? 'bg-white text-orange-600 shadow-2xs font-semibold'
+                      : 'text-neutral-600 hover:text-orange-600'
                   }`}
                 >
                   Node Grid Flow
@@ -303,7 +303,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                             node.isPaused
                               ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-300 shadow-xs'
                               : node.isRunning
-                              ? 'bg-neutral-900 text-white border-neutral-900 ring-2 ring-neutral-900 shadow-xs'
+                              ? 'bg-orange-600 text-white border-orange-600 ring-2 ring-orange-400 shadow-xs'
                               : node.isCompleted
                               ? 'bg-white border-emerald-300 text-neutral-900'
                               : 'bg-white/80 border-neutral-200 text-neutral-500 opacity-60'
@@ -320,7 +320,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                                 : 'rounded-lg'
                             } ${
                               node.isRunning
-                                ? 'bg-white text-neutral-900 border-white'
+                                ? 'bg-white text-orange-600 border-white'
                                 : node.isCompleted
                                 ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                                 : node.isPaused
@@ -339,13 +339,13 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                                 </span>
                                 <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
                                   node.isRunning
-                                    ? 'bg-neutral-800 text-neutral-200'
+                                    ? 'bg-orange-700 text-white'
                                     : 'bg-neutral-100 text-neutral-500'
                                 }`}>
                                   {node.checkpoint}
                                 </span>
                               </div>
-                              <div className={`text-[10px] ${node.isRunning ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                              <div className={`text-[10px] ${node.isRunning ? 'text-orange-100' : 'text-neutral-500'}`}>
                                 {node.subtitle}
                               </div>
                             </div>
@@ -357,7 +357,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                               node.isPaused
                                 ? 'bg-amber-200 text-amber-900 font-bold animate-pulse'
                                 : node.isRunning
-                                ? 'bg-white text-neutral-900 font-bold flex items-center gap-1'
+                                ? 'bg-white text-orange-600 font-bold flex items-center gap-1'
                                 : node.isCompleted
                                 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                 : 'text-neutral-400'
@@ -375,7 +375,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                                 'QUEUED'
                               )}
                             </span>
-                            <span className={`text-[10px] font-mono ${node.isRunning ? 'text-neutral-300' : 'text-neutral-400'}`}>
+                            <span className={`text-[10px] font-mono ${node.isRunning ? 'text-orange-100' : 'text-neutral-400'}`}>
                               {stepDurations[node.id] || (node.isRunning ? 'Active' : node.isCompleted ? 'Done' : '—')}
                             </span>
                           </div>
@@ -409,7 +409,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                       node.isPaused
                         ? 'bg-amber-50 border-amber-400'
                         : node.isRunning
-                        ? 'bg-neutral-900 text-white border-neutral-900'
+                        ? 'bg-orange-600 text-white border-orange-600 shadow-xs'
                         : node.isCompleted
                         ? 'bg-neutral-50/80 border-neutral-200'
                         : 'bg-white opacity-50 border-neutral-200'
@@ -420,7 +420,7 @@ export const PipelineWorkingState: React.FC<PipelineWorkingStateProps> = ({
                       <span>{node.isPaused ? 'HALTED' : node.isRunning ? 'RUNNING' : node.isCompleted ? 'DONE' : 'WAITING'}</span>
                     </div>
                     <div className="font-bold truncate">{node.title}</div>
-                    <div className="text-[10px] text-neutral-400 truncate">{node.subtitle}</div>
+                    <div className={`text-[10px] truncate ${node.isRunning ? 'text-orange-100' : 'text-neutral-400'}`}>{node.subtitle}</div>
                   </div>
                 ))}
               </div>
