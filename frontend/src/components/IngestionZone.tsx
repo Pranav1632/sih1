@@ -123,13 +123,13 @@ export const IngestionZone: React.FC<IngestionZoneProps> = ({
     <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs transition-all space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
-          <div className="p-2 bg-neutral-900 text-white rounded-xl shadow-xs">
+          <div className="p-2 bg-[#d97736] text-white rounded-xl shadow-xs">
             <UploadCloud className="w-4 h-4" />
           </div>
           <div>
             <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
               Source Ingestion
-              <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+              <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-[#eef7ed] text-[#2e7d32] border border-[#c8e6c9] font-semibold">
                 Air-Gapped
               </span>
             </h2>
@@ -141,10 +141,10 @@ export const IngestionZone: React.FC<IngestionZoneProps> = ({
 
         <button
           onClick={loadDemoPreset}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shadow-2xs cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-orange-950 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-lg transition-colors shadow-2xs cursor-pointer"
           title="Populate with sample intelligence report"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <Sparkles className="w-3.5 h-3.5 text-[#d97736]" />
           <span>Sample Intel</span>
         </button>
       </div>
@@ -156,8 +156,8 @@ export const IngestionZone: React.FC<IngestionZoneProps> = ({
         onDrop={handleDrop}
         className={`relative border border-dashed rounded-xl p-3.5 text-center transition-all cursor-pointer ${
           isDragging
-            ? 'border-neutral-900 bg-neutral-100/50'
-            : 'border-neutral-300 hover:border-neutral-400 bg-neutral-50/50 hover:bg-neutral-50'
+            ? 'border-[#d97736] bg-orange-50/50'
+            : 'border-neutral-300 hover:border-orange-400 bg-neutral-50/50 hover:bg-orange-50/30'
         }`}
       >
         <input
@@ -167,12 +167,12 @@ export const IngestionZone: React.FC<IngestionZoneProps> = ({
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
         <div className="flex items-center justify-center gap-3">
-          <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-neutral-700 border border-neutral-200 shadow-2xs shrink-0">
+          <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#d97736] border border-orange-200 shadow-2xs shrink-0">
             <Plus className="w-3.5 h-3.5" />
           </div>
           <div className="text-left">
             <div className="text-xs font-medium text-neutral-800">
-              Drop intelligence files here, or <span className="text-neutral-900 underline underline-offset-2 font-semibold">browse files</span>
+              Drop intelligence files here, or <span className="text-[#d97736] underline underline-offset-2 font-bold">browse files</span>
             </div>
             <div className="text-[10px] text-neutral-500">
               Files remain strictly local on device • No cloud egress

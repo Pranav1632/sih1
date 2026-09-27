@@ -28,6 +28,9 @@ import {
   FileCheck2,
   History,
   ChevronDown,
+  Search,
+  User,
+  Share2,
 } from 'lucide-react';
 
 import { IngestionZone, UploadedItem } from './components/IngestionZone';
@@ -167,9 +170,28 @@ const DEFAULT_PRESEED_HISTORY: HistorySessionItem[] = [
   }
 ];
 
+// Ashoka Emblem Component for Official Government of India UI
+const AshokaEmblem: React.FC = () => (
+  <div className="flex flex-col items-center justify-center shrink-0 pr-1">
+    <svg className="w-8 h-9 text-[#7c4d1c]" viewBox="0 0 100 120" fill="currentColor">
+      <path d="M50 8 C42 8 36 14 36 22 C36 28 40 33 45 35 C42 38 40 43 40 49 C40 58 46 64 50 66 C54 64 60 58 60 49 C60 43 58 38 55 35 C60 33 64 28 64 22 C64 14 58 8 50 8 Z" opacity="0.95" />
+      <path d="M28 20 C23 20 19 24 19 30 C19 35 22 39 26 41 C24 44 23 48 23 53 C23 60 28 65 32 67 C30 63 29 58 30 53 C31 46 34 40 38 36 C34 34 32 29 32 25 C32 22 30 20 28 20 Z" opacity="0.85" />
+      <path d="M72 20 C77 20 81 24 81 30 C81 35 78 39 74 41 C76 44 77 48 77 53 C77 60 72 65 68 67 C70 63 71 58 70 53 C69 46 66 40 62 36 C66 34 68 29 68 25 C68 22 70 20 72 20 Z" opacity="0.85" />
+      <rect x="15" y="70" width="70" height="10" rx="3" fill="#5c3912" />
+      <circle cx="50" cy="75" r="4.5" fill="#ffffff" />
+      <circle cx="50" cy="75" r="3" fill="#1e3a8a" />
+      <path d="M22 84 C30 80 70 80 78 84 C75 96 25 96 22 84 Z" fill="#7c4d1c" opacity="0.9" />
+      <rect x="25" y="100" width="50" height="4" rx="2" fill="#4a2c08" />
+    </svg>
+    <span className="text-[7.5px] font-serif font-bold text-neutral-800 tracking-wider mt-0.5">सत्यमेव जयते</span>
+  </div>
+);
+
 export const App: React.FC = () => {
   // 1. Top-Level Main Tabs: 'ingestion' | 'pipeline' | 'outputs' | 'history'
   const [activeMainTab, setActiveMainTab] = useState<'ingestion' | 'pipeline' | 'outputs' | 'history'>('ingestion');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchCategory, setSearchCategory] = useState<string>('All Modules');
 
   // Transformation History State (Persisted in localStorage)
   const [history, setHistory] = useState<HistorySessionItem[]>(() => {
@@ -898,45 +920,66 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa] text-neutral-900">
       
-      {/* Vercel-Style Minimalist Navbar */}
-      <header className="border-b border-neutral-200/80 bg-white/80 backdrop-blur sticky top-0 z-40 px-6 py-2.5">
-        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* National Tricolor Top Ribbon */}
+      <div className="h-1.5 w-full flex sticky top-0 z-50">
+        <div className="h-full flex-1 bg-[#ff9933]"></div>
+        <div className="h-full flex-1 bg-white"></div>
+        <div className="h-full flex-1 bg-[#138808]"></div>
+      </div>
+
+      {/* Official Government of India & MyGov-Inspired Header */}
+      <header className="border-b border-orange-100 bg-white sticky top-1.5 z-40 px-4 sm:px-8 py-3 shadow-2xs">
+        <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           
-          {/* Logo & Platform Name */}
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center text-white shadow-xs">
-              <Shield className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold tracking-tight text-neutral-900 font-sans">
-                  Sentinel-Transform
-                </h1>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
-                  v1.0 Sovereign
-                </span>
+          {/* Logo & Platform Branding */}
+          <div className="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
+            <div className="flex items-center space-x-3">
+              <AshokaEmblem />
+              <div className="flex flex-col border-l border-neutral-200 pl-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl font-black tracking-tight text-[#0f4c81] font-sans">my</span>
+                  <span className="text-xl font-black tracking-tight text-[#d97736] font-sans">GOV</span>
+                  <span className="text-xs font-bold text-neutral-800 font-sans ml-1">मेरी सरकार</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-[#d97736] uppercase tracking-wider">
+                    SENTINEL-TRANSFORM // NTRO PS 26154
+                  </span>
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-orange-50 text-orange-800 border border-orange-200 font-semibold">
+                    Air-Gapped Sovereign Node
+                  </span>
+                </div>
               </div>
-              <p className="text-xs text-neutral-500">
-                Multi-Format Intelligence Transformation Engine • NTRO PS 26154
-              </p>
+            </div>
+
+            {/* Mobile quick actions */}
+            <div className="md:hidden flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSimulateHardGate}
+                className="p-1.5 rounded-lg border border-orange-300 bg-orange-50 text-orange-800"
+                title="Simulate Gate"
+              >
+                <AlertTriangle className="w-4 h-4 text-orange-600" />
+              </button>
             </div>
           </div>
 
-          {/* Three Primary Navigation Tabs (Vercel Segmented Control) */}
-          <div className="flex items-center p-1 bg-neutral-100 border border-neutral-200/80 rounded-xl">
+          {/* Navigation Tabs (MyGov Soft Pill Style in Orange & White) */}
+          <div className="flex items-center p-1 bg-orange-50/70 border border-orange-200/70 rounded-full shadow-2xs overflow-x-auto max-w-full">
             <button
               type="button"
               onClick={() => setActiveMainTab('ingestion')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'ingestion'
-                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white text-orange-700 shadow-xs border border-orange-200'
+                  : 'text-neutral-600 hover:text-orange-800 hover:bg-white/60'
               }`}
             >
-              <UploadCloud className="w-3.5 h-3.5" />
+              <UploadCloud className="w-3.5 h-3.5 text-orange-600" />
               <span>1. Source Ingestion</span>
               {files.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-neutral-900 text-white text-[10px] flex items-center justify-center font-mono">
+                <span className="px-2 py-0.2 rounded-full bg-[#d97736] text-white text-[10px] font-mono font-bold">
                   {files.length}
                 </span>
               )}
@@ -945,21 +988,21 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
             <button
               type="button"
               onClick={() => setActiveMainTab('pipeline')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'pipeline'
-                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white text-orange-700 shadow-xs border border-orange-200'
+                  : 'text-neutral-600 hover:text-orange-800 hover:bg-white/60'
               }`}
             >
-              <Activity className="w-3.5 h-3.5" />
+              <Activity className="w-3.5 h-3.5 text-orange-600" />
               <span>2. Pipeline Working State</span>
               {executionPhase !== 'idle' && (
                 <span className={`w-2 h-2 rounded-full ${
                   executionPhase === 'completed'
                     ? 'bg-emerald-500'
                     : executionPhase === 'hard_gate_halted'
-                    ? 'bg-amber-500 animate-ping'
-                    : 'bg-blue-500 animate-pulse'
+                    ? 'bg-orange-500 animate-ping'
+                    : 'bg-orange-500 animate-pulse'
                 }`} />
               )}
             </button>
@@ -967,16 +1010,16 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
             <button
               type="button"
               onClick={() => setActiveMainTab('outputs')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'outputs'
-                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white text-orange-700 shadow-xs border border-orange-200'
+                  : 'text-neutral-600 hover:text-orange-800 hover:bg-white/60'
               }`}
             >
-              <FileCheck2 className="w-3.5 h-3.5" />
+              <FileCheck2 className="w-3.5 h-3.5 text-orange-600" />
               <span>3. Deliverable Outputs</span>
               {Object.keys(draftOutputs).length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-mono">
+                <span className="px-2 py-0.2 rounded-full bg-[#d97736] text-white text-[10px] font-mono font-bold">
                   {Object.keys(draftOutputs).length}
                 </span>
               )}
@@ -985,41 +1028,73 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
             <button
               type="button"
               onClick={() => setActiveMainTab('history')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer whitespace-nowrap ${
                 activeMainTab === 'history'
-                  ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'bg-white text-orange-700 shadow-xs border border-orange-200'
+                  : 'text-neutral-600 hover:text-orange-800 hover:bg-white/60'
               }`}
             >
-              <History className="w-3.5 h-3.5 text-blue-600" />
+              <History className="w-3.5 h-3.5 text-orange-600" />
               <span>4. History & Archive</span>
               {history.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-mono">
+                <span className="px-2 py-0.2 rounded-full bg-[#d97736] text-white text-[10px] font-mono font-bold">
                   {history.length}
                 </span>
               )}
             </button>
           </div>
 
-          {/* Telemetry Pills & Action Controls */}
-          <div className="flex items-center gap-2 font-mono text-xs">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>0 KB Egress</span>
+          {/* Right: Security Telemetry & Gate Controls */}
+          <div className="hidden md:flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#eef7ed] border border-[#c8e6c9] text-[#2e7d32] text-xs font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#4caf50] animate-pulse"></span>
+              <span>0 KB Egress Isolated</span>
             </div>
 
             <button
               type="button"
               onClick={handleSimulateHardGate}
-              className="flex items-center gap-1 px-3 py-1 text-xs font-sans font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg transition-colors shadow-2xs"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-orange-900 bg-orange-50 hover:bg-orange-100 border border-orange-300 rounded-full transition-colors shadow-2xs cursor-pointer"
               title="Test the Hard Gate interception moment"
             >
-              <AlertTriangle className="w-3 h-3 text-amber-600" />
-              Simulate Gate
+              <AlertTriangle className="w-3.5 h-3.5 text-[#d97736]" />
+              <span>Simulate Gate</span>
             </button>
+
+            <div className="w-8 h-8 rounded-full bg-orange-100 border border-orange-300 flex items-center justify-center text-orange-800" title="Operator: ACER">
+              <User className="w-4 h-4 text-orange-800" />
+            </div>
           </div>
+
         </div>
       </header>
+
+      {/* Government of India / MyGov Sub-Header Hero Banner */}
+      <div className="bg-white border-b border-orange-100 px-6 py-4 shadow-2xs">
+        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-bold text-[#d97736] tracking-wider uppercase font-sans">
+              GOVERNMENT OF INDIA // भारत सरकार
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight font-sans">
+              GET INVOLVED // राष्ट्र निर्माण एवं रक्षा विश्लेषण मंच
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-600 mt-0.5">
+              Participate in nation-building activities & air-gapped sovereign intelligence transformation.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#eef7ed] text-[#2e7d32] border border-[#c8e6c9] text-xs font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#4caf50]"></span>
+              <span>Submission Open / Active</span>
+            </span>
+            <span className="text-xs font-mono px-3.5 py-1 rounded-full bg-orange-50 text-orange-900 border border-orange-200 font-semibold">
+              Sep 2026 Session
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Main Tab Content */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-6">
@@ -1059,34 +1134,48 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
               selectedFormats={selectedFormats}
             />
 
-            {/* 5. Execution Action Card (Aligned Below At Last) */}
-            <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-2xl text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* 5. Execution Action Card (MyGov Styled with Terracotta Button) */}
+            <div className="p-6 bg-white border border-orange-200/90 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left">
-                <div className="text-sm font-bold text-neutral-100 flex items-center justify-center sm:justify-start gap-2">
-                  <Play className="w-4 h-4 fill-white" />
-                  <span>Ready to Execute Transformation</span>
+                <div className="text-base font-bold text-neutral-900 flex items-center justify-center sm:justify-start gap-2">
+                  <Play className="w-4 h-4 text-[#d97736] fill-[#d97736]" />
+                  <span>Ready to Execute Sovereign Transformation</span>
                   {parameters.custom_output_active && (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-400 text-neutral-950 font-bold">
                       Custom Spec Active
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-neutral-400">
+                <p className="text-xs text-neutral-500">
                   {files.length === 0
                     ? 'Upload at least one primary source document to begin'
-                    : `Synthesizing ${selectedFormats.length} outputs with ${parameters.words}w budget per deliverable`}
+                    : `Synthesizing ${selectedFormats.length} sovereign outputs with ${parameters.words}w budget per deliverable`}
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleExecute}
-                disabled={files.length === 0 || executionPhase === 'ingesting'}
-                className="px-8 py-3.5 bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-sm rounded-xl shadow-md disabled:opacity-40 transition-all flex items-center gap-2 cursor-pointer shrink-0"
-              >
-                <span>Execute Transformation</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleExecute}
+                  disabled={files.length === 0 || executionPhase === 'ingesting'}
+                  className="px-8 py-3.5 bg-[#d97736] hover:bg-[#c66526] text-white font-bold text-xs sm:text-sm rounded-full shadow-md disabled:opacity-40 transition-all flex items-center gap-2.5 cursor-pointer"
+                >
+                  <span>Make Your Contribution</span>
+                  <div className="w-5 h-5 rounded-full border border-white/80 flex items-center justify-center">
+                    <ArrowRight className="w-3 h-3 text-white" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadActiveDeliverable}
+                  disabled={!draftOutputs[activeDeliverableTab]}
+                  className="w-10 h-10 rounded-full border border-neutral-200 hover:border-orange-400 flex items-center justify-center text-neutral-600 hover:text-orange-700 transition-colors cursor-pointer"
+                  title="Share / Export Deliverable"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
           </div>
@@ -1140,10 +1229,10 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                     <button
                       key={fId}
                       onClick={() => setActiveDeliverableTab(fId)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                      className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200 font-semibold'
-                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                          ? 'bg-[#d97736] text-white shadow-xs font-bold'
+                          : 'text-neutral-600 hover:text-orange-900 hover:bg-orange-50/80'
                       }`}
                     >
                       {formatLabels[fId] || fId}
@@ -1159,7 +1248,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                   <button
                     type="button"
                     onClick={handleDownloadActiveDeliverable}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-[#d97736] hover:bg-[#c66526] rounded-full shadow-xs transition-all cursor-pointer"
                     title={`Download ${activeDeliverableTab} deliverable`}
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -1172,7 +1261,7 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                   <button
                     type="button"
                     onClick={handleDownloadAllZip}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-xs transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-orange-950 bg-orange-100 hover:bg-orange-200 border border-orange-300 rounded-full shadow-xs transition-all cursor-pointer"
                     title="Download all generated deliverables bundled in a single ZIP package (.zip)"
                   >
                     <Archive className="w-3.5 h-3.5" />

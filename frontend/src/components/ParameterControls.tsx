@@ -109,7 +109,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-neutral-900 text-white rounded-xl shadow-xs">
+            <div className="p-2 bg-[#d97736] text-white rounded-xl shadow-xs">
               <Sliders className="w-4 h-4" />
             </div>
             <div>
@@ -252,7 +252,7 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
               value={parameters.words || 400}
               disabled={parameters.custom_output_active}
               onChange={(e) => updateField('words', parseInt(e.target.value))}
-              className={`w-full accent-neutral-900 h-2 bg-neutral-200 rounded-lg cursor-pointer ${
+              className={`w-full accent-[#d97736] h-2 bg-neutral-200 rounded-lg cursor-pointer ${
                 parameters.custom_output_active ? 'opacity-40 cursor-not-allowed' : ''
               }`}
             />
@@ -315,10 +315,10 @@ export const ParameterSection1: React.FC<ParameterSection1Props> = ({
                     key={fmt.id}
                     type="button"
                     onClick={() => toggleFormat(fmt.id)}
-                    className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all ${
+                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
-                        : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100/70'
+                        ? 'bg-[#d97736] text-white border-[#d97736] shadow-xs'
+                        : 'bg-white text-neutral-700 border-neutral-200 hover:bg-orange-50/50'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
