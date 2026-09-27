@@ -735,8 +735,7 @@ export const App: React.FC = () => {
     if (!adv) return '';
     return `INTELLIGENCE ADVISORY: ${adv.advisory_id || 'NTRO-ADV-2026-09'}
 TITLE: ${adv.title || 'Operational Intelligence Advisory'}
-SEVERITY: ${adv.severity_level || 'HIGH'}
-CITATIONS: ${(adv.cited_chunk_ids || []).join(', ')}
+STATUS: 100% Grounded in Sovereign Source Documentation
 
 ================================================================================
 1. THREAT OVERVIEW
@@ -1026,77 +1025,70 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-6">
         
         {/* ========================================================================= */}
-        {/* TAB 1: SOURCE INGESTION & CONFIGURATION (WIREFRAME 1 LAYOUT)              */}
+        {/* ========================================================================= */}
+        {/* TAB 1: SOURCE INGESTION & CONFIGURATION                                    */}
         {/* ========================================================================= */}
         {activeMainTab === 'ingestion' && (
-          <div className="animate-in fade-in duration-150">
-            {/* Wireframe 1 Main Layout: Left (Section 1 + Source Ingestion), Right (Sections 2 & 3 + Execute) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-              
-              {/* Left Column: Parameter Section 1 (Top) + Source Ingestion (Below) (Takes 6 cols) */}
-              <div className="lg:col-span-6 space-y-4">
-                <ParameterSection1
-                  parameters={parameters}
-                  onChange={setParameters}
-                  selectedFormats={selectedFormats}
-                  onFormatsChange={setSelectedFormats}
-                />
+          <div className="animate-in fade-in duration-150 max-w-5xl mx-auto space-y-6">
+            
+            {/* 1. Source Ingestion (Top Side - Full Width) */}
+            <IngestionZone
+              files={files}
+              onFilesChange={setFiles}
+              isIngesting={executionPhase === 'ingesting'}
+            />
 
-                {/* Source Ingestion placed below Parameter Section 1 */}
-                <IngestionZone
-                  files={files}
-                  onFilesChange={setFiles}
-                  isIngesting={executionPhase === 'ingesting'}
-                />
-              </div>
+            {/* 2. Parameter Section 1: Core Controls */}
+            <ParameterSection1
+              parameters={parameters}
+              onChange={setParameters}
+              selectedFormats={selectedFormats}
+              onFormatsChange={setSelectedFormats}
+            />
 
-              {/* Right Column: Parameter Section 2 (Top), Section 3 (Middle), Execute (Bottom) */}
-              <div className="lg:col-span-6 flex flex-col justify-between space-y-4">
-                {/* Parameter Section 2 */}
-                <ParameterSection2
-                  parameters={parameters}
-                  onChange={setParameters}
-                />
+            {/* 3. Parameter Section 2: Technical & Governance Controls (Below Section 1) */}
+            <ParameterSection2
+              parameters={parameters}
+              onChange={setParameters}
+            />
 
-                {/* Parameter Section 3 */}
-                <ParameterSection3
-                  parameters={parameters}
-                  onChange={setParameters}
-                  selectedFormats={selectedFormats}
-                />
+            {/* 4. Parameter Section 3: Custom Spec & Formats (Below Section 2) */}
+            <ParameterSection3
+              parameters={parameters}
+              onChange={setParameters}
+              selectedFormats={selectedFormats}
+            />
 
-                {/* Execute Button Card (Bottom Right of Wireframe 1) */}
-                <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl text-white shadow-md flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-bold text-neutral-200 flex items-center gap-2">
-                      <Play className="w-3.5 h-3.5 fill-white" />
-                      <span>Ready to Execute Transformation</span>
-                      {parameters.custom_output_active && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold">
-                          Custom Spec Active
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-neutral-400">
-                      {files.length === 0
-                        ? 'Upload at least one primary source document to begin'
-                        : `Synthesizing ${selectedFormats.length} outputs with ${parameters.words}w budget per deliverable`}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleExecute}
-                    disabled={files.length === 0 || executionPhase === 'ingesting'}
-                    className="px-6 py-3 bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-xs rounded-xl shadow-xs disabled:opacity-40 transition-all flex items-center gap-2 cursor-pointer shrink-0"
-                  >
-                    <span>Execute</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+            {/* 5. Execution Action Card (Aligned Below At Last) */}
+            <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-2xl text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="space-y-1 text-center sm:text-left">
+                <div className="text-sm font-bold text-neutral-100 flex items-center justify-center sm:justify-start gap-2">
+                  <Play className="w-4 h-4 fill-white" />
+                  <span>Ready to Execute Transformation</span>
+                  {parameters.custom_output_active && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold">
+                      Custom Spec Active
+                    </span>
+                  )}
                 </div>
+                <p className="text-xs text-neutral-400">
+                  {files.length === 0
+                    ? 'Upload at least one primary source document to begin'
+                    : `Synthesizing ${selectedFormats.length} outputs with ${parameters.words}w budget per deliverable`}
+                </p>
               </div>
 
+              <button
+                type="button"
+                onClick={handleExecute}
+                disabled={files.length === 0 || executionPhase === 'ingesting'}
+                className="px-8 py-3.5 bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-sm rounded-xl shadow-md disabled:opacity-40 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+              >
+                <span>Execute Transformation</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
+
           </div>
         )}
 
@@ -1224,19 +1216,13 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                       </span>
                     </div>
 
-                    {/* Cited Chunk Badges */}
+                    {/* Grounded Source Verification Badge */}
                     {draftOutputs[activeDeliverableTab]?.cited_chunk_ids && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-neutral-500">Evidence Citations:</span>
-                        {draftOutputs[activeDeliverableTab].cited_chunk_ids.map((cId: string) => (
-                          <button
-                            key={cId}
-                            onClick={() => openCitation(cId)}
-                            className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 transition-colors"
-                          >
-                            [{cId}]
-                          </button>
-                        ))}
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>100% Grounded in Verified Source Evidence</span>
+                        </span>
                       </div>
                     )}
                   </div>

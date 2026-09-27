@@ -10,11 +10,11 @@ from pydantic import BaseModel, Field
 
 class Scene(BaseModel):
     """Single video scene storyboard entry."""
-    scene_number: int
-    duration_seconds: int
-    visual_description: str = Field(description="On-screen visual action, b-roll, graphics")
-    narration_voiceover: str = Field(description="Exact spoken narration text")
-    on_screen_subtitles: str = Field(description="Lower-third subtitle text")
+    scene_number: int = 1
+    duration_seconds: int = 15
+    visual_description: str = Field(default="", description="On-screen visual action, b-roll, graphics")
+    narration_voiceover: str = Field(default="", description="Exact spoken narration text")
+    on_screen_subtitles: str = Field(default="", description="Lower-third subtitle text")
     music_sound_cues: str = Field(default="", description="Audio tone and sound effects")
 
 

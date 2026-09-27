@@ -128,27 +128,46 @@ SCHEMA_EXAMPLES: Dict[str, Any] = {
         "cited_chunk_ids": ["doc_01_chunk_01"],
     },
     "twitter": {
-        "thread_title": "Executive Threat Intelligence Briefing",
-        "total_tweets": 5,
+        "thread_title": "Executive Technical Briefing",
+        "total_tweets": 1,
         "tweets": [
-            {"tweet_number": 1, "content": "1/5 🚨 THREAT INTEL: Critical analysis from official source reports indicates targeted activities against monitored critical infrastructure.", "character_count": 142, "contains_media_placeholder": False},
-            {"tweet_number": 2, "content": "2/5 FORENSIC FINDINGS: Discrepancy audits and deep coordinate indexing reveal specific vectors across primary operational subsystems.", "character_count": 137, "contains_media_placeholder": False},
-            {"tweet_number": 3, "content": "3/5 MITIGATION DIRECTIVES: All host nodes must enforce strict baseline integrity checks and isolate unverified administrative tokens immediately.", "character_count": 147, "contains_media_placeholder": False},
-            {"tweet_number": 4, "content": "4/5 TECHNICAL COMPLIANCE: Inter-agency telemetry verification demonstrates zero cloud egress with all data bounded in local defense vaults.", "character_count": 141, "contains_media_placeholder": False},
-            {"tweet_number": 5, "content": "5/5 ACTION REQUIRED: Senior command personnel must review coordinate citations and approve emergency mitigation protocols. #Intel #Resilience", "character_count": 149, "contains_media_placeholder": False},
+            {
+                "tweet_number": 1,
+                "content": "Detailed single post summarizing the core breakthrough, exact empirical metrics, author or institution, and strategic impact strictly under 280 characters. #Intelligence #Technology",
+                "character_count": 182,
+                "contains_media_placeholder": False
+            }
         ],
         "cited_chunk_ids": ["doc_01_chunk_01"],
     },
     "video": {
-        "video_title": "Video title from document topic",
-        "target_duration_minutes": 5,
+        "video_title": "Detailed Video Title from Document Topic",
+        "target_duration": "60 Seconds",
+        "logline": "Comprehensive technical briefing on the core findings and operational takeaways from the document.",
         "scenes": [
             {
                 "scene_number": 1,
-                "scene_title": "Opening",
-                "narration_script": "Narration for the opening scene.",
-                "visual_direction": "Title card with background.",
+                "duration_seconds": 15,
+                "visual_description": "Opening title card displaying document title, author or agency, and primary research focus.",
+                "narration_voiceover": "Detailed opening narration introducing the primary subject matter and research scope directly from the source.",
+                "on_screen_subtitles": "INTELLIGENCE ASSESSMENT // TECHNICAL SCOPE",
+                "music_sound_cues": "Subtle ambient synthesizer, steady cadence",
+            },
+            {
+                "scene_number": 2,
                 "duration_seconds": 30,
+                "visual_description": "Animated visual schematic or benchmark chart illustrating the core empirical findings and quantitative metrics.",
+                "narration_voiceover": "In-depth spoken explanation breaking down the primary quantitative metrics, methodology, and verified breakthroughs from the document.",
+                "on_screen_subtitles": "CORE FINDINGS // QUANTITATIVE ANALYSIS",
+                "music_sound_cues": "Focused tempo with subtle percussive rhythm",
+            },
+            {
+                "scene_number": 3,
+                "duration_seconds": 15,
+                "visual_description": "Summary checklist displaying strategic action items, regulatory directives, and organizational takeaways.",
+                "narration_voiceover": "Closing spoken directive detailing leadership decisions, operational actions, and compliance next steps.",
+                "on_screen_subtitles": "ACTION DIRECTIVES // STRATEGIC ROADMAP",
+                "music_sound_cues": "Crescendo into clean resolution tone",
             }
         ],
         "cited_chunk_ids": ["doc_01_chunk_01"],
@@ -233,41 +252,18 @@ def synthesize_heuristic_draft(
         )
 
     elif format_key == "twitter":
+        t1_text = f"{grounded_sents[0] if grounded_sents else 'Grounded technical briefing from ' + source_name}"[:275]
         tweets = [
             TweetItem(
                 tweet_number=1,
-                content=f"1/6 🚨 INTEL ALERT: Authoritative assessment compiled from {source_name}. Critical infrastructure review active."[:275],
-                character_count=min(len(f"1/6 🚨 INTEL ALERT: Authoritative assessment compiled from {source_name}. Critical infrastructure review active."), 275),
-            ),
-            TweetItem(
-                tweet_number=2,
-                content=f"2/6 KEY FINDING: {grounded_sents[0] if grounded_sents else 'Grounded coordinate verification confirms operational parameters.'}"[:275],
-                character_count=min(len(f"2/6 KEY FINDING: {grounded_sents[0] if grounded_sents else 'Grounded coordinate verification confirms operational parameters.'}"), 275),
-            ),
-            TweetItem(
-                tweet_number=3,
-                content=f"3/6 FORENSICS: Identified key operational vector involving {first_entity}. Full coordinate citations anchored to vault chunks."[:275],
-                character_count=min(len(f"3/6 FORENSICS: Identified key operational vector involving {first_entity}. Full coordinate citations anchored to vault chunks."), 275),
-            ),
-            TweetItem(
-                tweet_number=4,
-                content=f"4/6 MITIGATION: {grounded_sents[1] if len(grounded_sents) > 1 else 'Enforce mandatory baseline audits across active control segments.'}"[:275],
-                character_count=min(len(f"4/6 MITIGATION: {grounded_sents[1] if len(grounded_sents) > 1 else 'Enforce mandatory baseline audits across active control segments.'}"), 275),
-            ),
-            TweetItem(
-                tweet_number=5,
-                content=f"5/6 RESILIENCE: {grounded_sents[2] if len(grounded_sents) > 2 else 'Zero cloud egress telemetry confirmed; all transformations verified locally.'}"[:275],
-                character_count=min(len(f"5/6 RESILIENCE: {grounded_sents[2] if len(grounded_sents) > 2 else 'Zero cloud egress telemetry confirmed; all transformations verified locally.'}"), 275),
-            ),
-            TweetItem(
-                tweet_number=6,
-                content=f"6/6 ACTION DIRECTIVE: Leadership sign-off required for technical controls. #CyberDefense #NationalSecurity #AirGapped #NTRO"[:275],
-                character_count=min(len(f"6/6 ACTION DIRECTIVE: Leadership sign-off required for technical controls. #CyberDefense #NationalSecurity #AirGapped #NTRO"), 275),
-            ),
+                content=t1_text,
+                character_count=len(t1_text),
+                contains_media_placeholder=False,
+            )
         ]
         return TwitterThreadSchema(
-            thread_title=f"Incident Briefing: {source_name}",
-            total_tweets=len(tweets),
+            thread_title=f"Technical Summary: {source_name}",
+            total_tweets=1,
             tweets=tweets,
             cited_chunk_ids=chunk_ids[:2],
         )
@@ -275,7 +271,7 @@ def synthesize_heuristic_draft(
     elif format_key == "advisory":
         return AdvisorySchema(
             advisory_id="NTRO-ADV-2026-09",
-            title=f"Intelligence Advisory: Assessment for {source_name}",
+            title=f"Technical Assessment: {source_name}",
             severity_level="HIGH",
             threat_overview=grounded_sents[0] if grounded_sents else primary_text[:400],
             affected_systems=[f"Systems evaluated in {source_name}"],
@@ -287,12 +283,12 @@ def synthesize_heuristic_draft(
 
     elif format_key == "exec_summary":
         return ExecSummarySchema(
-            situation_overview=f"Situational briefing: Operational intelligence synthesis compiled from {source_name}.",
+            situation_overview=f"Situational briefing: Technical analysis compiled from {source_name}.",
             core_findings=grounded_sents[:3] if len(grounded_sents) >= 3 else [primary_text[:200]],
             strategic_impact=grounded_sents[3] if len(grounded_sents) > 3 else "Operational readiness and compliance verified with zero cloud data egress.",
             decisions_required=[
-                "Approve dissemination of verified intelligence briefing to authorized personnel.",
-                "Authorize execution of technical recommendations per source guidelines.",
+                "Review verified briefing with authorized personnel.",
+                "Authorize technical implementation per source guidelines.",
             ],
             confidence_assessment="HIGH",
             cited_chunk_ids=chunk_ids[:2],
@@ -332,36 +328,40 @@ def synthesize_heuristic_draft(
         )
 
     elif format_key in ("video", "video_package"):
+        s1 = grounded_sents[0] if len(grounded_sents) > 0 else f"Analysis conducted on {source_name}."
+        s2 = grounded_sents[1] if len(grounded_sents) > 1 else "Key empirical findings and structural classifications verified."
+        s3 = grounded_sents[2] if len(grounded_sents) > 2 else "Final recommendations compiled for operational deployment."
+
         scenes = [
             Scene(
                 scene_number=1,
                 duration_seconds=15,
-                visual_description="Opening title card with dark-mode Sentinel-Transform crest and operational timestamp.",
-                narration_voiceover=f"National defense update: A critical vulnerability assessment has been conducted for {source_name}.",
-                on_screen_subtitles="SENTINEL-TRANSFORM | OPERATIONAL DISSEMINATION",
-                music_sound_cues="Low ambient synth drone, military tempo",
+                visual_description=f"Opening title card with technical Sentinel-Transform branding displaying {source_name}.",
+                narration_voiceover=f"Technical update on {source_name}: {s1[:160]}",
+                on_screen_subtitles="SENTINEL-TRANSFORM // TECHNICAL BRIEFING",
+                music_sound_cues="Low ambient synth, steady tempo",
             ),
             Scene(
                 scene_number=2,
                 duration_seconds=30,
-                visual_description="Animated schematic displaying isolated substation endpoints and zero data egress indicators.",
-                narration_voiceover=f"All anomalous activity was intercepted and contained by {first_entity}. Zero sensitive telemetry reached external networks.",
-                on_screen_subtitles="CONTAINMENT CONFIRMED | ZERO DATA EGRESS",
-                music_sound_cues="Subtle percussive ticks indicating scanning progress",
+                visual_description="Technical schematic diagram and benchmark overview displaying key findings and metrics.",
+                narration_voiceover=f"Core technical findings confirmed: {s2[:190]}",
+                on_screen_subtitles="CORE TECHNICAL FINDINGS // VERIFIED",
+                music_sound_cues="Subtle percussive rhythmic progression",
             ),
             Scene(
                 scene_number=3,
                 duration_seconds=15,
-                visual_description="Checklist of remediation directives and official compliance contact details.",
-                narration_voiceover="Operators are directed to execute immediate patch verification and audit logs.",
-                on_screen_subtitles="MANDATORY ACTION: AUDIT SCHEDULED TASKS",
-                music_sound_cues="Crescendo to confident outro tone",
+                visual_description="Summary checklist of strategic directives, operational conclusions, and compliance contact details.",
+                narration_voiceover=f"Operational takeaway: {s3[:160]}",
+                on_screen_subtitles="STRATEGIC DIRECTIVES // COMPLETE",
+                music_sound_cues="Crescendo into confident outro tone",
             ),
         ]
         return VideoPackageSchema(
-            video_title=f"Tactical Video Briefing: {source_name}",
+            video_title=f"Technical Briefing: {source_name}",
             target_duration="60 Seconds",
-            logline=f"Operational intelligence video briefing on threat containment for {source_name}.",
+            logline=f"Technical video briefing on findings from {source_name}.",
             scenes=scenes,
             cited_chunk_ids=chunk_ids[:2],
         )
@@ -418,14 +418,145 @@ import threading
 # Per-format num_predict caps — tuned for local CPU qwen2.5:3b
 # Lower = faster; these are sized for the actual output needed
 FORMAT_TOKEN_LIMITS = {
-    "exec_summary": 900,
-    "linkedin": 800,
-    "infographic": 900,
-    "advisory": 1400,
-    "presentation": 2048,
-    "twitter": 1400,
-    "video": 1200,
+    "exec_summary": 1200,
+    "linkedin": 900,
+    "infographic": 1000,
+    "advisory": 1500,
+    "presentation": 2500,
+    "twitter": 700,
+    "video": 2048,
 }
+
+
+def _normalize_parsed_dict(norm_key: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Sanitizes and normalizes LLM-generated dictionaries to guarantee they match
+    exact Pydantic schema requirements without failing validation.
+    """
+    if not isinstance(data, dict):
+        return data
+
+    if norm_key in ("video", "video_package"):
+        if "scenes" in data and isinstance(data["scenes"], list):
+            for i, sc in enumerate(data["scenes"]):
+                if not isinstance(sc, dict):
+                    continue
+                if "scene_number" not in sc:
+                    sc["scene_number"] = i + 1
+                # Visual field normalization
+                if "visual_description" not in sc:
+                    sc["visual_description"] = (
+                        sc.get("visual_direction")
+                        or sc.get("visuals")
+                        or sc.get("visual")
+                        or sc.get("description")
+                        or f"Visual scene setup for Scene {i+1}."
+                    )
+                # Voiceover field normalization
+                if "narration_voiceover" not in sc:
+                    sc["narration_voiceover"] = (
+                        sc.get("narration_script")
+                        or sc.get("voiceover")
+                        or sc.get("narration")
+                        or sc.get("script")
+                        or sc.get("audio")
+                        or ""
+                    )
+                # Subtitles & music normalization
+                if "on_screen_subtitles" not in sc:
+                    sc["on_screen_subtitles"] = (
+                        sc.get("subtitles")
+                        or sc.get("subtitle")
+                        or sc.get("lower_third")
+                        or ""
+                    )
+                if "music_sound_cues" not in sc:
+                    sc["music_sound_cues"] = (
+                        sc.get("sound_cues")
+                        or sc.get("music")
+                        or sc.get("audio_cues")
+                        or "Low ambient background music"
+                    )
+                # Duration seconds normalization
+                dur = sc.get("duration_seconds") or sc.get("duration") or 15
+                if isinstance(dur, str):
+                    nums = _re.findall(r"\d+", dur)
+                    sc["duration_seconds"] = int(nums[0]) if nums else 15
+                else:
+                    try:
+                        sc["duration_seconds"] = int(dur)
+                    except Exception:
+                        sc["duration_seconds"] = 15
+
+        if "target_duration" not in data:
+            if "target_duration_minutes" in data:
+                data["target_duration"] = f"{data['target_duration_minutes']} Minutes"
+            else:
+                total_s = sum(
+                    sc.get("duration_seconds", 15)
+                    for sc in data.get("scenes", [])
+                    if isinstance(sc, dict)
+                )
+                data["target_duration"] = f"{total_s or 60} Seconds"
+        if "logline" not in data:
+            data["logline"] = data.get("video_title", "Technical briefing video")
+        if "video_title" not in data:
+            data["video_title"] = data.get("title", "Technical Production Briefing")
+
+    elif norm_key == "twitter":
+        if "tweets" in data and isinstance(data["tweets"], list):
+            for i, tw in enumerate(data["tweets"]):
+                if not isinstance(tw, dict):
+                    tw = {"content": str(tw)}
+                    data["tweets"][i] = tw
+                if "tweet_number" not in tw:
+                    tw["tweet_number"] = i + 1
+                c = str(tw.get("content", ""))
+                tw["content"] = c
+                if "character_count" not in tw or not isinstance(tw["character_count"], int):
+                    tw["character_count"] = len(c)
+                if "contains_media_placeholder" not in tw:
+                    tw["contains_media_placeholder"] = False
+        elif "content" in data:
+            c = str(data["content"])
+            data["tweets"] = [
+                {
+                    "tweet_number": 1,
+                    "content": c,
+                    "character_count": len(c),
+                    "contains_media_placeholder": False,
+                }
+            ]
+        if "thread_title" not in data:
+            data["thread_title"] = "Technical Intelligence Briefing"
+        if "total_tweets" not in data:
+            data["total_tweets"] = len(data.get("tweets", []))
+
+    elif norm_key == "presentation":
+        if "deck_title" not in data:
+            data["deck_title"] = data.get("title", "Executive Technical Briefing")
+        if "target_audience" not in data:
+            data["target_audience"] = "Executive & Strategic Leadership"
+        if "slides" in data and isinstance(data["slides"], list):
+            for i, sl in enumerate(data["slides"]):
+                if not isinstance(sl, dict):
+                    continue
+                if "slide_number" not in sl:
+                    sl["slide_number"] = i + 1
+                if "title" not in sl:
+                    sl["title"] = sl.get("slide_title", f"Key Finding {i+1}")
+                if "bullet_points" in sl and isinstance(sl["bullet_points"], str):
+                    sl["bullet_points"] = [
+                        bp.strip("-* ") for bp in sl["bullet_points"].split("\n") if bp.strip()
+                    ]
+                elif "bullet_points" not in sl or not isinstance(sl["bullet_points"], list):
+                    sl["bullet_points"] = ["Key empirical finding identified in source."]
+                if "visual_guidance" not in sl:
+                    sl["visual_guidance"] = sl.get("visual_layout", "Standard 2-column layout")
+                if "speaker_notes" not in sl:
+                    sl["speaker_notes"] = sl.get("notes", "")
+
+    return data
 
 
 def _repair_json(raw: str) -> str:
@@ -550,16 +681,17 @@ def generate_single_format(
         # Step 1: Repair JSON (handle fences, truncation, brace imbalance)
         repaired = _repair_json(raw_json)
 
-        # Step 2: Pydantic validation — strict then lenient
+        # Step 2: Pydantic validation — normalize first to tolerate minor model field discrepancies
         try:
-            out = schema_cls.model_validate_json(repaired).model_dump()
+            parsed = _json.loads(repaired)
+            parsed = _normalize_parsed_dict(norm_key, parsed)
+            out = schema_cls.model_validate(parsed).model_dump()
         except Exception as val_err:
-            logger.warning(f"[LLM_SYNTHESIZER] Strict validation failed for '{norm_key}': {val_err}")
+            logger.warning(f"[LLM_SYNTHESIZER] Normalized validation failed for '{norm_key}': {val_err}")
             try:
-                parsed = _json.loads(repaired)
-                out = schema_cls.model_validate(parsed).model_dump()
+                out = schema_cls.model_validate_json(repaired).model_dump()
             except Exception as parse_err:
-                logger.warning(f"[LLM_SYNTHESIZER] Lenient parse also failed for '{norm_key}': {parse_err}")
+                logger.warning(f"[LLM_SYNTHESIZER] Strict JSON validate also failed for '{norm_key}': {parse_err}")
                 raise  # fall through to heuristic
 
         # Populate citations
