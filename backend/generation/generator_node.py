@@ -141,14 +141,32 @@ SCHEMA_EXAMPLES: Dict[str, Any] = {
     },
     "video": {
         "video_title": "Video title from document topic",
-        "target_duration_minutes": 5,
+        "target_duration": "90 seconds",
+        "logline": "High-level strategic briefing on threat posture and countermeasure implementation.",
         "scenes": [
             {
                 "scene_number": 1,
-                "scene_title": "Opening",
-                "narration_script": "Narration for the opening scene.",
-                "visual_direction": "Title card with background.",
                 "duration_seconds": 30,
+                "visual_description": "Title card displaying threat alert and tactical briefing overview.",
+                "narration_voiceover": "Executive briefing detailing the core intelligence findings and operational status.",
+                "on_screen_subtitles": "Sovereign Intelligence Briefing: Strategic Overview",
+                "music_sound_cues": "Subtle low-frequency ambient tone.",
+            }
+        ],
+        "cited_chunk_ids": ["doc_01_chunk_01"],
+    },
+    "video_package": {
+        "video_title": "Video title from document topic",
+        "target_duration": "90 seconds",
+        "logline": "High-level strategic briefing on threat posture and countermeasure implementation.",
+        "scenes": [
+            {
+                "scene_number": 1,
+                "duration_seconds": 30,
+                "visual_description": "Title card displaying threat alert and tactical briefing overview.",
+                "narration_voiceover": "Executive briefing detailing the core intelligence findings and operational status.",
+                "on_screen_subtitles": "Sovereign Intelligence Briefing: Strategic Overview",
+                "music_sound_cues": "Subtle low-frequency ambient tone.",
             }
         ],
         "cited_chunk_ids": ["doc_01_chunk_01"],
@@ -501,7 +519,7 @@ def generate_single_format(
         context_summary=context_summary,
     )
 
-    model_name = settings.OLLAMA_MODEL_DEV
+    model_name = (parameters or {}).get("model_selected") or settings.OLLAMA_MODEL_DEV
     num_predict = FORMAT_TOKEN_LIMITS.get(norm_key, 1200)
 
     try:

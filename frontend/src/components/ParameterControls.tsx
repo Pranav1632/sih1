@@ -46,7 +46,8 @@ export const INDIAN_LANGUAGES = [
 ];
 
 export const MODEL_OPTIONS = [
-  { id: 'qwen2.5:3b', name: 'Ollama qwen2.5:3b (Active Local Air-Gapped)', badge: 'Local Active' },
+  { id: 'qwen2.5:7b', name: 'Ollama qwen2.5:7b (Active Local Air-Gapped - GPU/High Fidelity)', badge: 'Local Active' },
+  { id: 'qwen2.5:3b', name: 'Ollama qwen2.5:3b (Fast Local CPU)', badge: 'Local' },
   { id: 'llama3.2:3b', name: 'Ollama llama3.2:3b (Edge Sovereign)', badge: 'Local' },
   { id: 'mistral-7b', name: 'Mistral-7B-Instruct (Defense Spec v2)', badge: 'Air-Gapped' },
   { id: 'deepseek-r1-7b', name: 'DeepSeek-R1-Distill-Qwen (Reasoning Engine)', badge: 'Air-Gapped' },
@@ -422,7 +423,7 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
           {!isOpen && (
             <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px]">
               <span className="px-2 py-0.5 rounded bg-neutral-100 border border-neutral-200 text-neutral-700 font-medium">
-                {parameters.model_selected || 'qwen2.5:3b'}
+                {parameters.model_selected || 'qwen2.5:7b'}
               </span>
               <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 font-medium">
                 {parameters.language || 'English'}
@@ -461,7 +462,7 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
             </span>
           </div>
           <select
-            value={parameters.model_selected || 'qwen2.5:3b'}
+            value={parameters.model_selected || 'qwen2.5:7b'}
             onChange={(e) => updateField('model_selected', e.target.value)}
             className="w-full bg-white border border-neutral-200 rounded-lg p-2 text-xs font-semibold text-neutral-900 focus:outline-hidden focus:border-neutral-900"
           >

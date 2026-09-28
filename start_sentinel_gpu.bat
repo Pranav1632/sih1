@@ -53,7 +53,7 @@ start http://localhost:5173
 
 echo ===============================================================================
 echo  [+] ALL 3 SERVICES ARE NOW RUNNING!
-echo      1. Ollama LLM:      http://localhost:11434 (qwen2.5:3b with CUDA)
+echo      1. Ollama LLM:      http://localhost:11434 (qwen2.5:7b with CUDA)
 echo      2. FastAPI Backend: http://127.0.0.1:8000 (0 KB egress)
 echo      3. Web Dashboard:   http://localhost:5173
 echo.
