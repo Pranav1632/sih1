@@ -172,6 +172,38 @@ SCHEMA_EXAMPLES: Dict[str, Any] = {
         ],
         "cited_chunk_ids": ["doc_01_chunk_01"],
     },
+    "video_package": {
+        "video_title": "Detailed Video Title from Document Topic",
+        "target_duration": "60 Seconds",
+        "logline": "Comprehensive technical briefing on the core findings and operational takeaways from the document.",
+        "scenes": [
+            {
+                "scene_number": 1,
+                "duration_seconds": 15,
+                "visual_description": "Opening title card displaying document title, author or agency, and primary research focus.",
+                "narration_voiceover": "Detailed opening narration introducing the primary subject matter and research scope directly from the source.",
+                "on_screen_subtitles": "INTELLIGENCE ASSESSMENT // TECHNICAL SCOPE",
+                "music_sound_cues": "Subtle ambient synthesizer, steady cadence",
+            },
+            {
+                "scene_number": 2,
+                "duration_seconds": 30,
+                "visual_description": "Animated visual schematic or benchmark chart illustrating the core empirical findings and quantitative metrics.",
+                "narration_voiceover": "In-depth spoken explanation breaking down the primary quantitative metrics, methodology, and verified breakthroughs from the document.",
+                "on_screen_subtitles": "CORE FINDINGS // QUANTITATIVE ANALYSIS",
+                "music_sound_cues": "Focused tempo with subtle percussive rhythm",
+            },
+            {
+                "scene_number": 3,
+                "duration_seconds": 15,
+                "visual_description": "Summary checklist displaying strategic action items, regulatory directives, and organizational takeaways.",
+                "narration_voiceover": "Closing spoken directive detailing leadership decisions, operational actions, and compliance next steps.",
+                "on_screen_subtitles": "ACTION DIRECTIVES // STRATEGIC ROADMAP",
+                "music_sound_cues": "Crescendo into clean resolution tone",
+            }
+        ],
+        "cited_chunk_ids": ["doc_01_chunk_01"],
+    },
 }
 
 
@@ -632,7 +664,7 @@ def generate_single_format(
         context_summary=context_summary,
     )
 
-    model_name = settings.OLLAMA_MODEL_DEV
+    model_name = (parameters or {}).get("model_selected") or settings.OLLAMA_MODEL_DEV
     num_predict = FORMAT_TOKEN_LIMITS.get(norm_key, 1200)
 
     try:
@@ -651,21 +683,46 @@ def generate_single_format(
               f"(use real content from the document above, NOT these placeholder strings):\n{example_json}"
         )
 
-        stream = _ollama.chat(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": prompt_bundle["system"]},
-                {"role": "user", "content": user_with_schema},
-            ],
-            format="json",
-            options={
-                "temperature": 0.15,
-                "num_predict": num_predict,
-                "top_p": 0.9,
-                "repeat_penalty": 1.1,
-            },
-            stream=True,
-        )
+        try:
+            stream = _ollama.chat(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": prompt_bundle["system"]},
+                    {"role": "user", "content": user_with_schema},
+                ],
+                format="json",
+                options={
+                    "temperature": 0.15,
+                    "num_predict": num_predict,
+                    "top_p": 0.9,
+                    "repeat_penalty": 1.1,
+                },
+                stream=True,
+            )
+        except Exception as model_err:
+            if "not found" in str(model_err).lower() and model_name != "qwen2.5:3b":
+                logger.warning(
+                    f"[LLM_SYNTHESIZER] Model '{model_name}' not found locally in Ollama. "
+                    f"Gracefully falling back to installed 'qwen2.5:3b'..."
+                )
+                model_name = "qwen2.5:3b"
+                stream = _ollama.chat(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": prompt_bundle["system"]},
+                        {"role": "user", "content": user_with_schema},
+                    ],
+                    format="json",
+                    options={
+                        "temperature": 0.15,
+                        "num_predict": num_predict,
+                        "top_p": 0.9,
+                        "repeat_penalty": 1.1,
+                    },
+                    stream=True,
+                )
+            else:
+                raise model_err
 
         raw_json = ""
         for chunk in stream:

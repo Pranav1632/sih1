@@ -24,7 +24,7 @@ class Settings(BaseModel):
 
     # Development model for local CPU execution
     OLLAMA_MODEL_DEV: str = Field(
-        default_factory=lambda: os.getenv("OLLAMA_MODEL_DEV", "qwen2.5:3b")
+        default_factory=lambda: os.getenv("OLLAMA_MODEL_DEV", "qwen2.5:7b")
     )
 
     # Demo model for deployment

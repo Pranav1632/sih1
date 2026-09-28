@@ -207,7 +207,7 @@ export const App: React.FC = () => {
     keywords_must: [],
     add_on_instruction: '',
     fact_matching_gate: true,
-    model_selected: 'qwen2.5:3b',
+    model_selected: 'qwen2.5:7b',
     custom_output_active: false,
     format_customizations: {},
   });
@@ -420,7 +420,7 @@ export const App: React.FC = () => {
           step: 'generator_node',
           title: 'Parallel Multi-Format Generation Node',
           status: 'running',
-          message: `[LLM_SYNTHESIZER] ⚡ Dispatching structured synthesis to local Ollama (qwen2.5:3b) for ${selectedFormats.length} schemas [${selectedFormats.join(', ')}]...`,
+          message: `[LLM_SYNTHESIZER] ⚡ Dispatching structured synthesis to local Ollama (${parameters.model_selected || 'qwen2.5:7b'}) for ${selectedFormats.length} schemas [${selectedFormats.join(', ')}]...`,
           timestamp: ((performance.now() - startOverall) / 1000).toFixed(2) + 's',
           egress: '0 KB',
         },

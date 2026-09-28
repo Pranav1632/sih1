@@ -46,7 +46,8 @@ export const INDIAN_LANGUAGES = [
 ];
 
 export const MODEL_OPTIONS = [
-  { id: 'qwen2.5:3b', name: 'Ollama qwen2.5:3b (Active Local Air-Gapped)', badge: 'Local Active' },
+  { id: 'qwen2.5:7b', name: 'Ollama qwen2.5:7b (Active Local Air-Gapped - GPU/High Fidelity)', badge: 'Local Active' },
+  { id: 'qwen2.5:3b', name: 'Ollama qwen2.5:3b (Fast Local CPU)', badge: 'Local' },
   { id: 'llama3.2:3b', name: 'Ollama llama3.2:3b (Edge Sovereign)', badge: 'Local' },
   { id: 'mistral-7b', name: 'Mistral-7B-Instruct (Defense Spec v2)', badge: 'Air-Gapped' },
   { id: 'deepseek-r1-7b', name: 'DeepSeek-R1-Distill-Qwen (Reasoning Engine)', badge: 'Air-Gapped' },
@@ -461,7 +462,7 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
             </span>
           </div>
           <select
-            value={parameters.model_selected || 'qwen2.5:3b'}
+            value={parameters.model_selected || 'qwen2.5:7b'}
             onChange={(e) => updateField('model_selected', e.target.value)}
             className="w-full bg-white border border-neutral-200 rounded-lg p-2 text-xs font-semibold text-neutral-900 focus:outline-hidden focus:border-neutral-900"
           >
