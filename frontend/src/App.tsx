@@ -896,10 +896,10 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
   const primaryDoc = files.find((f) => f.role === 'PRIMARY')?.name;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa] text-neutral-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#ffffff] via-[#fdfbfa] to-[#f8f6f2] text-neutral-900">
       
       {/* Vercel-Style Minimalist Navbar */}
-      <header className="border-b border-neutral-200/80 bg-white/80 backdrop-blur sticky top-0 z-40 px-6 py-2.5">
+      <header className="border-b border-neutral-200/80 bg-white/90 backdrop-blur sticky top-0 z-40 px-6 py-2.5">
         <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           
           {/* Logo & Platform Name */}

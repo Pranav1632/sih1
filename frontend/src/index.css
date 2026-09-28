@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-[#fafafa] text-neutral-900 font-sans min-h-screen antialiased selection:bg-orange-600 selection:text-white;
+    @apply bg-gradient-to-b from-[#ffffff] via-[#fdfbfa] to-[#f8f6f2] text-neutral-900 font-sans min-h-screen antialiased selection:bg-orange-600 selection:text-white;
   }
 }
 
