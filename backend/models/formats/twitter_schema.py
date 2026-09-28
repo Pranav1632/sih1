@@ -10,15 +10,15 @@ from pydantic import BaseModel, Field
 
 class TweetItem(BaseModel):
     """Single tweet within a thread."""
-    tweet_number: int = Field(description="Order in the thread (e.g. 1, 2, 3)")
-    content: str = Field(description="Post text strictly <= 280 characters")
-    character_count: int = Field(description="Exact character length")
+    tweet_number: int = Field(default=1, description="Order in the thread (e.g. 1, 2, 3)")
+    content: str = Field(default="", description="Post text strictly <= 280 characters")
+    character_count: int = Field(default=0, description="Exact character length")
     contains_media_placeholder: bool = Field(default=False)
 
 
 class TwitterThreadSchema(BaseModel):
     """Deliverable F2: Twitter/X Post & Thread sequence."""
-    thread_title: str
-    total_tweets: int
+    thread_title: str = Field(default="Executive Intelligence Briefing")
+    total_tweets: int = Field(default=1)
     tweets: List[TweetItem] = Field(default_factory=list)
     cited_chunk_ids: List[str] = Field(default_factory=list)

@@ -460,13 +460,25 @@ FORMAT_TOKEN_LIMITS = {
 }
 
 
-def _normalize_parsed_dict(norm_key: str, data: Dict[str, Any]) -> Dict[str, Any]:
+def _normalize_parsed_dict(norm_key: str, data: Any) -> Dict[str, Any]:
     """
     Sanitizes and normalizes LLM-generated dictionaries to guarantee they match
     exact Pydantic schema requirements without failing validation.
     """
     if not isinstance(data, dict):
-        return data
+        if isinstance(data, list):
+            if norm_key == "twitter":
+                data = {"tweets": data}
+            elif norm_key in ("video", "video_package"):
+                data = {"scenes": data}
+            elif norm_key == "presentation":
+                data = {"slides": data}
+            elif norm_key == "infographic":
+                data = {"sections": data}
+            else:
+                return data
+        else:
+            return data
 
     if norm_key in ("video", "video_package"):
         if "scenes" in data and isinstance(data["scenes"], list):
@@ -536,33 +548,66 @@ def _normalize_parsed_dict(norm_key: str, data: Dict[str, Any]) -> Dict[str, Any
             data["video_title"] = data.get("title", "Technical Production Briefing")
 
     elif norm_key == "twitter":
-        if "tweets" in data and isinstance(data["tweets"], list):
+        # Handle synonyms for tweets list: thread, posts, items
+        if "tweets" not in data or not isinstance(data.get("tweets"), list):
+            if "thread" in data and isinstance(data["thread"], list):
+                data["tweets"] = data["thread"]
+            elif "posts" in data and isinstance(data["posts"], list):
+                data["tweets"] = data["posts"]
+            elif "items" in data and isinstance(data["items"], list):
+                data["tweets"] = data["items"]
+            elif "content" in data:
+                c = str(data["content"])
+                data["tweets"] = [
+                    {
+                        "tweet_number": 1,
+                        "content": c[:280],
+                        "character_count": len(c[:280]),
+                        "contains_media_placeholder": False,
+                    }
+                ]
+            elif "text" in data:
+                c = str(data["text"])
+                data["tweets"] = [
+                    {
+                        "tweet_number": 1,
+                        "content": c[:280],
+                        "character_count": len(c[:280]),
+                        "contains_media_placeholder": False,
+                    }
+                ]
+            else:
+                data["tweets"] = []
+
+        if isinstance(data.get("tweets"), list):
             for i, tw in enumerate(data["tweets"]):
                 if not isinstance(tw, dict):
                     tw = {"content": str(tw)}
                     data["tweets"][i] = tw
                 if "tweet_number" not in tw:
                     tw["tweet_number"] = i + 1
-                c = str(tw.get("content", ""))
-                tw["content"] = c
+                c = str(tw.get("content") or tw.get("text") or tw.get("tweet") or tw.get("post") or "")
+                tw["content"] = c[:280]
                 if "character_count" not in tw or not isinstance(tw["character_count"], int):
-                    tw["character_count"] = len(c)
+                    tw["character_count"] = len(tw["content"])
                 if "contains_media_placeholder" not in tw:
                     tw["contains_media_placeholder"] = False
-        elif "content" in data:
-            c = str(data["content"])
+
+        if not data.get("tweets"):
+            fallback_text = str(data.get("title") or data.get("thread_title") or "Technical Intelligence Briefing")
             data["tweets"] = [
                 {
                     "tweet_number": 1,
-                    "content": c,
-                    "character_count": len(c),
+                    "content": fallback_text[:280],
+                    "character_count": len(fallback_text[:280]),
                     "contains_media_placeholder": False,
                 }
             ]
+
         if "thread_title" not in data:
-            data["thread_title"] = "Technical Intelligence Briefing"
+            data["thread_title"] = data.get("title") or "Technical Intelligence Briefing"
         if "total_tweets" not in data:
-            data["total_tweets"] = len(data.get("tweets", []))
+            data["total_tweets"] = len(data.get("tweets", [])) or 1
 
     elif norm_key == "presentation":
         if "deck_title" not in data:
