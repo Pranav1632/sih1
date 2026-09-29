@@ -25,6 +25,7 @@
   - [3.6 Executive Summary (`exec_summary`)](#6-executive-summary-exec_summary)
   - [3.7 Presentation Deck (`presentation`)](#7-presentation-deck-presentation)
   - [3.8 Multi-Format Simultaneous Generation](#8-multi-format-simultaneous-generation)
+  - [3.9 Configurable Dashboard Parameters (11-Control Matrix)](#39-configurable-dashboard-parameters-11-control-matrix)
 - [4. Key Architectural Differentiators](#4-key-architectural-differentiators)
 - [5. System Architecture & Pipeline Flow](#5-system-architecture--pipeline-flow)
 - [6. Readme with Setup Instructions (Step-by-Step Guide)](#6-readme-with-setup-instructions-step-by-step-guide)
@@ -117,6 +118,21 @@ Sentinel-Transform provides end-to-end schema validation and generation across a
 
 #### 8. Multi-Format Simultaneous Generation
 Users can select any combination (or click **All 7 Formats**) in the UI. The engine synthesizes all selected outputs from the exact same ingested source chunks, guaranteeing zero cross-deliverable contradictions. All generated files can be downloaded individually or as a consolidated `.zip` archive.
+
+### 3.9 Configurable Dashboard Parameters (11-Control Matrix)
+The platform eliminates manual, open-ended prompt writing through an **11-control "Zero-Prompt" Parameter Engine** on the operator dashboard. These discrete parameters compile programmatically into constrained system instructions and strict Pydantic v2 schema validation contracts:
+
+1. **Target Audience**: Calibrates lexical density and technical abstraction (Executive Leadership, Technical CISOs, SOC Responders, Inter-Agency Liaisons, Public/Media).
+2. **Communication Tone**: Enforces institutional voice (Authoritative Defense, Objective Technical, Urgent Crisis, Formal Advisory).
+3. **Level of Detail**: Selects analytical depth (Executive Synopsis, Standard Analytical, Deep Forensic Analysis).
+4. **Target Word Budget**: Independent word allocation slider (100 to 3,000 words per deliverable) ensuring depth matches operational volume requirements.
+5. **Communication Objective**: Directs strategic focus (Strategic Situational Briefing, Threat Mitigation Directive, Incident Triage, Public Awareness).
+6. **Formality & Style Scaling**: Granular 1-to-10 formality scale governing sentence cadence and statutory compliance.
+7. **Output Language**: Native multilingual synthesis capability supporting English and Indian official languages.
+8. **Compulsory Keywords & Forensic IoCs**: Non-negotiable keyword injection module enforcing inclusion of specific CVE identifiers, threat actor codenames, IP subnets, and SHA256 hashes.
+9. **Special Operator Add-on Directives**: Injects tactical mission caveats, distribution restrictions, and Traffic Light Protocol markings (TLP:RED, TLP:AMBER, TLP:GREEN, TLP:CLEAR).
+10. **Fact-Matching Hard Gate Sensitivity**: Configures verification rigor (Strict vs. Standard threshold), triggering an automated publication halt if model outputs diverge from source text.
+11. **Dynamic Local Model Selector**: Hot-swaps across local open-weight runtimes (Qwen 2.5 7B GPU / Qwen 2.5 3B CPU / Llama 3) based on host silicon availability.
 
 ---
 
