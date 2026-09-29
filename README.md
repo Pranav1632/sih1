@@ -27,7 +27,7 @@
   - [3.8 Multi-Format Simultaneous Generation](#8-multi-format-simultaneous-generation)
 - [4. Key Architectural Differentiators](#4-key-architectural-differentiators)
 - [5. System Architecture & Pipeline Flow](#5-system-architecture--pipeline-flow)
-- [6. Quickstart Setup Instructions](#6-quickstart-setup-instructions)
+- [6. Readme with Setup Instructions (Step-by-Step Guide)](#6-readme-with-setup-instructions-step-by-step-guide)
   - [6.1 Prerequisites](#prerequisites)
   - [6.2 Step 1: Install & Launch Ollama Model](#step-1-install--launch-ollama-model)
   - [6.3 Step 2: Clone & Set Up Backend Environment](#step-2-clone--set-up-backend-environment)
@@ -152,7 +152,7 @@ flowchart TD
 
 ---
 
-## 6. Quickstart Setup Instructions
+## 6. Readme with Setup Instructions (Step-by-Step Guide)
 
 ### Prerequisites
 - **Operating System**: Windows 11 (64-bit) or Linux (Ubuntu 22.04+)
