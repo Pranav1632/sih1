@@ -58,8 +58,6 @@ The platform delivers every required component specified in the official SIH eva
 | **1. Source Code Link** | Complete, clean, and modular repository with FastAPI backend, React 18 + TypeScript frontend, LangGraph pipeline, and automated test suite. | [`GitHub Repository Root`](.) / Push-ready |
 | **2. Readme with Setup Instructions** | Step-by-step setup for Windows 11 & Linux, local LLM runtime (Ollama), Python virtual environments, and 1-click execution scripts. | [`README.md`](README.md) & [`SETUP_GUIDE_GPU.md`](SETUP_GUIDE_GPU.md) |
 | **3. Architecture Document (Max 2 Pages)** | Standalone 2-page architecture specification detailing the 3 variants, LangGraph state machine, and air-gapped security boundary. | [`build_specifications/architecture_master_breakdown.md`](build_specifications/architecture_master_breakdown.md) |
-| **4. Demo Video (Max 2 Minutes)** | Exact second-by-second 120-second storyboard with spoken voiceover script, UI action cues, and fast-forward timings. | [`build_specifications/04_demo_script_and_pitch_deck.md`](build_specifications/04_demo_script_and_pitch_deck.md#L1-L20) |
-| **5. Technical Presentation (Max 5 Slides)** | Production-ready 5-slide winning pitch deck formatted in both PowerPoint (`.pptx`) and printable document (`.pdf`). | [`SIH_2026_Sentinel_Transform_Official_Deck.pptx`](SIH_2026_Sentinel_Transform_Official_Deck.pptx) & [`.pdf`](SIH_2026_Sentinel_Transform_Official_Deck.pdf) |
 
 ---
 
