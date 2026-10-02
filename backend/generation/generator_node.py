@@ -107,22 +107,29 @@ SCHEMA_EXAMPLES: Dict[str, Any] = {
         "cited_chunk_ids": ["doc_01_chunk_01"],
     },
     "infographic": {
-        "infographic_title": "Infographic title from the document topic",
-        "central_theme": "The core theme being visualized",
+        "infographic_title": "Operation GhostLatch: SCADA Firmware Exploit & Infrastructure Impact",
+        "central_theme": "Coordinated firmware exploitation of substation control units and immediate defense mitigations",
         "sections": [
             {
                 "section_order": 1,
-                "header": "Section header one",
-                "key_statistic_or_callout": "A key statistic or fact",
-                "descriptive_copy": "Brief descriptive text for this section.",
-                "recommended_chart_type": "Bar Chart",
+                "header": "INCIDENT SCOPE & ATTRIBUTION",
+                "key_statistic_or_callout": "2 SUBSTATIONS INFECTED",
+                "descriptive_copy": "Unpatched firmware vulnerability exploited to gain lateral access to substation control units across regional electrical distribution sectors.",
+                "recommended_chart_type": "Metric Card",
             },
             {
                 "section_order": 2,
-                "header": "Section header two",
-                "key_statistic_or_callout": "Another key callout",
-                "descriptive_copy": "Descriptive text for section two.",
+                "header": "ATTACK KILL-CHAIN & MECHANISM",
+                "key_statistic_or_callout": "CVE-2026-PENDING",
+                "descriptive_copy": "Exploit targeted legacy serial communication controllers, disabling automated circuit telemetry before manual failsafes were engaged.",
                 "recommended_chart_type": "Flowchart",
+            },
+            {
+                "section_order": 3,
+                "header": "INCIDENT CONTAINMENT & RESOLUTION",
+                "key_statistic_or_callout": "< 24 HOURS TO PATCH",
+                "descriptive_copy": "Emergency firmware upgrade applied across all critical endpoints with 100% containment and zero cascading blackouts observed.",
+                "recommended_chart_type": "Timeline",
             },
         ],
         "cited_chunk_ids": ["doc_01_chunk_01"],
@@ -632,6 +639,42 @@ def _normalize_parsed_dict(norm_key: str, data: Any) -> Dict[str, Any]:
                     sl["visual_guidance"] = sl.get("visual_layout", "Standard 2-column layout")
                 if "speaker_notes" not in sl:
                     sl["speaker_notes"] = sl.get("notes", "")
+
+    elif norm_key == "infographic":
+        if "infographic_title" not in data:
+            data["infographic_title"] = data.get("title") or "Technical Intelligence Infographic Specification"
+        if "central_theme" not in data:
+            data["central_theme"] = data.get("theme") or "Operational Intelligence & Empirical Findings"
+        if "sections" in data and isinstance(data["sections"], list):
+            for i, sec in enumerate(data["sections"]):
+                if not isinstance(sec, dict):
+                    continue
+                if "section_order" not in sec:
+                    sec["section_order"] = i + 1
+                if "header" not in sec:
+                    sec["header"] = sec.get("title") or sec.get("section_title") or f"Section {i+1}"
+                if "key_statistic_or_callout" not in sec:
+                    sec["key_statistic_or_callout"] = (
+                        sec.get("key_statistic")
+                        or sec.get("statistic")
+                        or sec.get("callout")
+                        or sec.get("metric")
+                        or "Key Operational Insight"
+                    )
+                if "descriptive_copy" not in sec:
+                    sec["descriptive_copy"] = (
+                        sec.get("description")
+                        or sec.get("copy")
+                        or sec.get("text")
+                        or ""
+                    )
+                if "recommended_chart_type" not in sec:
+                    sec["recommended_chart_type"] = (
+                        sec.get("chart_type")
+                        or sec.get("chart")
+                        or sec.get("visualization")
+                        or "Bar Chart"
+                    )
 
     return data
 

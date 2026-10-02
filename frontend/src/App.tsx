@@ -1543,19 +1543,48 @@ ${adv.compliance_and_governance || 'Standard operational guidelines apply.'}`;
                   {/* Format 5: Infographic */}
                   {activeDeliverableTab === 'infographic' && (
                     <div className="space-y-5">
-                      <h2 className="text-lg font-bold text-neutral-900">{draftOutputs.infographic.infographic_title}</h2>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {draftOutputs.infographic.sections?.map((sec: any, idx: number) => (
-                          <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white space-y-2">
-                            <div className="text-xs font-bold text-neutral-900">{sec.header}</div>
-                            <p className="text-xs text-neutral-600">{sec.descriptive_copy}</p>
-                            {sec.key_statistic && (
-                              <div className="p-2 bg-neutral-50 rounded-lg font-mono text-xs font-bold text-neutral-900">
-                                {sec.key_statistic}
+                      <div>
+                        <h2 className="text-lg font-bold text-neutral-900">{draftOutputs.infographic.infographic_title}</h2>
+                        {draftOutputs.infographic.central_theme && (
+                          <p className="text-xs text-neutral-600 mt-1 italic bg-neutral-50 border border-neutral-200/80 p-2.5 rounded-lg">
+                            <strong className="text-neutral-800 not-italic font-semibold">Central Narrative: </strong>
+                            {draftOutputs.infographic.central_theme}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {draftOutputs.infographic.sections?.map((sec: any, idx: number) => {
+                          const stat = sec.key_statistic_or_callout || sec.key_statistic;
+                          const chart = sec.recommended_chart_type || sec.chart_type || 'Bar Chart';
+                          const order = sec.section_order || idx + 1;
+                          return (
+                            <div key={idx} className="p-4 border border-neutral-200 rounded-xl bg-white shadow-2xs space-y-2.5 flex flex-col justify-between">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between pb-1.5 border-b border-neutral-100">
+                                  <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-100 text-neutral-700">
+                                    SECTION {order}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                    <BarChart3 className="w-3 h-3" />
+                                    <span>{chart}</span>
+                                  </span>
+                                </div>
+                                <h3 className="text-xs font-bold text-neutral-900">{sec.header}</h3>
+                                <p className="text-xs text-neutral-600 leading-relaxed">{sec.descriptive_copy}</p>
                               </div>
-                            )}
-                          </div>
-                        ))}
+
+                              {stat && (
+                                <div className="p-2.5 bg-neutral-50/90 border border-neutral-200 rounded-lg">
+                                  <span className="text-[9px] font-mono text-neutral-400 block uppercase tracking-wider mb-0.5">Key Metric / Callout</span>
+                                  <div className="font-mono text-xs font-bold text-neutral-900">
+                                    {stat}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
