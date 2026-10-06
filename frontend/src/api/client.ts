@@ -60,6 +60,7 @@ export interface GlobalParams {
   add_on_instruction: string;
   fact_matching_gate: boolean;
   simulate_hard_gate?: boolean;
+  temperature?: number;
   model_selected?: string;
   url_scrape_input?: string;
   custom_output_active?: boolean;

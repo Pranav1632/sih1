@@ -753,12 +753,13 @@ def generate_single_format(
     )
 
     model_name = (parameters or {}).get("model_selected") or settings.OLLAMA_MODEL_DEV
+    temperature = float((parameters or {}).get("temperature", 0.15))
     num_predict = FORMAT_TOKEN_LIMITS.get(norm_key, 1200)
 
     try:
         import ollama as _ollama
 
-        logger.info(f"[LLM_SYNTHESIZER] Streaming '{norm_key}' via Ollama ({model_name}, max_tokens={num_predict})...")
+        logger.info(f"[LLM_SYNTHESIZER] Streaming '{norm_key}' via Ollama ({model_name}, temp={temperature}, max_tokens={num_predict})...")
 
         if job_id:
             _st.push_event(job_id, "format_start", format=norm_key, model=model_name)
@@ -780,7 +781,7 @@ def generate_single_format(
                 ],
                 format="json",
                 options={
-                    "temperature": 0.15,
+                    "temperature": temperature,
                     "num_predict": num_predict,
                     "top_p": 0.9,
                     "repeat_penalty": 1.1,
@@ -802,7 +803,7 @@ def generate_single_format(
                     ],
                     format="json",
                     options={
-                        "temperature": 0.15,
+                        "temperature": temperature,
                         "num_predict": num_predict,
                         "top_p": 0.9,
                         "repeat_penalty": 1.1,

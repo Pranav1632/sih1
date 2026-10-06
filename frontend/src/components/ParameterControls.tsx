@@ -25,6 +25,7 @@ import {
   Layers,
   Check,
   Zap,
+  Flame,
 } from 'lucide-react';
 import { GlobalParams, FormatCustomSpec } from '../api/client';
 import { FORMAT_CATALOG } from './FormatSelector';
@@ -646,6 +647,67 @@ export const ParameterSection2: React.FC<ParameterSection2Props> = ({
             />
             <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neutral-900"></div>
           </label>
+        </div>
+      </div>
+
+      {/* 10. Sampling Temperature Control */}
+      <div className="bg-neutral-50/80 border border-neutral-200/80 p-3.5 rounded-xl space-y-2.5">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1.5">
+            <Flame className="w-3.5 h-3.5 text-orange-600" />
+            <span className="font-semibold text-neutral-800">10. LLM Sampling Temperature</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200 font-bold">
+              {(parameters.temperature ?? 0.15).toFixed(2)}
+            </span>
+            <span className="text-[10px] text-neutral-500 font-mono">
+              {(parameters.temperature ?? 0.15) <= 0.05
+                ? 'Deterministic'
+                : (parameters.temperature ?? 0.15) <= 0.3
+                ? 'Defense Factual'
+                : (parameters.temperature ?? 0.15) <= 0.6
+                ? 'Balanced'
+                : 'Creative'}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min="0.0"
+            max="1.0"
+            step="0.05"
+            value={parameters.temperature ?? 0.15}
+            onChange={(e) => updateField('temperature', parseFloat(e.target.value))}
+            className="flex-1 h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-orange-600"
+          />
+        </div>
+
+        <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-0.5">
+          <span className="text-[10px] text-neutral-400">0.0 (Forensic/Greedy)</span>
+          <div className="flex gap-1.5">
+            {[
+              { label: '0.0 Forensic', val: 0.0 },
+              { label: '0.15 Defense Factual', val: 0.15 },
+              { label: '0.7 Creative', val: 0.7 },
+            ].map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => updateField('temperature', preset.val)}
+                className={`px-2 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer ${
+                  Math.abs((parameters.temperature ?? 0.15) - preset.val) < 0.01
+                    ? 'bg-orange-600 text-white border-orange-600 font-semibold'
+                    : 'bg-white text-neutral-700 border-neutral-200 hover:bg-orange-50'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-[10px] text-neutral-400">1.0 (High Variance)</span>
         </div>
       </div>
         </div>

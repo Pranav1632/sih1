@@ -221,6 +221,17 @@ class TestGeneratorNode:
         assert len(out["recommended_mitigations"]) >= 2
         assert "cited_chunk_ids" in out
 
+    def test_generate_single_format_with_temperature(self, sample_source_chunks):
+        # Validate that custom temperature parameter (0.0 strictly deterministic) is accepted and processed
+        out = generate_single_format(
+            "advisory",
+            sample_source_chunks,
+            {"tone": "Strict", "temperature": 0.0}
+        )
+        assert isinstance(out, dict)
+        assert "advisory_id" in out
+        assert "recommended_mitigations" in out
+
     def test_run_parallel_format_generation_all_seven_formats(self, sample_source_chunks):
         state = get_empty_agent_state(job_id="test_gen_job_001")
         state["source_chunks"] = sample_source_chunks

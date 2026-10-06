@@ -207,6 +207,7 @@ export const App: React.FC = () => {
     keywords_must: [],
     add_on_instruction: '',
     fact_matching_gate: true,
+    temperature: 0.15,
     model_selected: 'qwen2.5:7b',
     custom_output_active: false,
     format_customizations: {},

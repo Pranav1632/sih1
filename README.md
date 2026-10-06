@@ -117,8 +117,8 @@ Sentinel-Transform provides end-to-end schema validation and generation across a
 #### 8. Multi-Format Simultaneous Generation
 Users can select any combination (or click **All 7 Formats**) in the UI. The engine synthesizes all selected outputs from the exact same ingested source chunks, guaranteeing zero cross-deliverable contradictions. All generated files can be downloaded individually or as a consolidated `.zip` archive.
 
-### 3.9 Configurable Dashboard Parameters (11-Control Matrix)
-The platform eliminates manual, open-ended prompt writing through an **11-control "Zero-Prompt" Parameter Engine** on the operator dashboard. These discrete parameters compile programmatically into constrained system instructions and strict Pydantic v2 schema validation contracts:
+### 3.9 Configurable Dashboard Parameters (12-Control Matrix)
+The platform eliminates manual, open-ended prompt writing through a **12-control "Zero-Prompt" Parameter Engine** on the operator dashboard. These discrete parameters compile programmatically into constrained system instructions and strict Pydantic v2 schema validation contracts:
 
 1. **Target Audience**: Calibrates lexical density and technical abstraction (Executive Leadership, Technical CISOs, SOC Responders, Inter-Agency Liaisons, Public/Media).
 2. **Communication Tone**: Enforces institutional voice (Authoritative Defense, Objective Technical, Urgent Crisis, Formal Advisory).
@@ -131,6 +131,7 @@ The platform eliminates manual, open-ended prompt writing through an **11-contro
 9. **Special Operator Add-on Directives**: Injects tactical mission caveats, distribution restrictions, and Traffic Light Protocol markings (TLP:RED, TLP:AMBER, TLP:GREEN, TLP:CLEAR).
 10. **Fact-Matching Hard Gate Sensitivity**: Configures verification rigor (Strict vs. Standard threshold), triggering an automated publication halt if model outputs diverge from source text.
 11. **Dynamic Local Model Selector**: Hot-swaps across local open-weight runtimes (Qwen 2.5 7B GPU / Qwen 2.5 3B CPU / Llama 3) based on host silicon availability.
+12. **LLM Sampling Temperature Control**: Granular continuous control slider ($0.0$ to $1.0$, default $0.15$) with quick-select presets for **0.0 Forensic** (strictly deterministic zero-hallucination / greedy decoding), **0.15 Defense Factual** (optimal factual fidelity for national security advisories), and **0.7 Creative** (nuanced multi-perspective narrative synthesis).
 
 ---
 
